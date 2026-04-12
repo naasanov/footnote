@@ -1,0 +1,57 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Runs Next.js dev server (localhost:3000)
+      "name": "Frontend",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm --filter web dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      // Runs Fastify with tsx watch (localhost:3001)
+      "name": "API",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm --filter api dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      // Fastify with Node inspector — attach VS Code debugger for breakpoints
+      // Requires "dev:debug": "tsx watch --inspect src/index.ts" in apps/api/package.json
+      "name": "API (debug)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "api", "dev:debug"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      // Attach to a running Next.js dev server for server-side breakpoints
+      // Start the frontend first, then run this
+      "name": "Frontend (attach)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      // Starts both dev servers together — use this for normal development
+      "name": "Full Stack",
+      "configurations": ["Frontend", "API"],
+      "stopAll": true
+    },
+    {
+      // Full stack with API debugger attached
+      "name": "Full Stack (debug API)",
+      "configurations": ["Frontend", "API (debug)"],
+      "stopAll": true
+    }
+  ]
+}
