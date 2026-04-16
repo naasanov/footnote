@@ -9,6 +9,7 @@ import { SourceList } from './features/SourceList/SourceList'
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip'
 import { Input } from './ui/input'
 import { useOcrSearch } from '@/hooks/useOcrSearch'
+import { persistAppShellLayoutState, readAppShellLayoutState } from '@/lib/session-state'
 import { cn } from '@/lib/utils'
 import type { OcrBbox } from '@/lib/types'
 
@@ -40,7 +41,6 @@ export function useAppShellRegisterZoom(fn: ZoomFn | null) {
     if (!ctx) return
     ctx.registerZoom(fn)
     return () => ctx.registerZoom(null)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx, fn])
 }
 
@@ -58,6 +58,7 @@ const MAX_LEFT_WIDTH = 420
 const MIN_RIGHT_WIDTH = 240
 const DEFAULT_RIGHT_WIDTH = 300
 const MAX_RIGHT_WIDTH = 520
+const DEFAULT_LEFT_TOP_RATIO = 0.62
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -89,15 +90,29 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
   const registerZoom = useCallback((fn: ZoomFn | null) => {
     setZoomFnState(() => fn)
   }, [])
-  const [leftTopRatio, setLeftTopRatio] = useState(0.62)
+  const [leftTopRatio, setLeftTopRatio] = useState(DEFAULT_LEFT_TOP_RATIO)
   const [isDraggingLeftDivider, setIsDraggingLeftDivider] = useState(false)
   const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT_WIDTH)
   const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH)
   const [draggingSidebar, setDraggingSidebar] = useState<'left' | 'right' | null>(null)
+  const [hasHydratedLayout, setHasHydratedLayout] = useState(false)
   const shellRef = useRef<HTMLDivElement | null>(null)
   const leftSplitRef = useRef<HTMLDivElement | null>(null)
   const leftDividerFrameRef = useRef<number | null>(null)
   const pendingLeftTopRatioRef = useRef(leftTopRatio)
+
+  useEffect(() => {
+    const storedLayout = readAppShellLayoutState()
+
+    if (storedLayout) {
+      setLeftWidth(storedLayout.leftWidth)
+      setRightWidth(storedLayout.rightWidth)
+      setLeftTopRatio(storedLayout.leftTopRatio)
+      pendingLeftTopRatioRef.current = storedLayout.leftTopRatio
+    }
+
+    setHasHydratedLayout(true)
+  }, [])
 
   // Tablet breakpoint: collapse left panel by default
   useEffect(() => {
@@ -219,6 +234,16 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
 
     return () => window.removeEventListener('resize', syncSidebarWidths)
   }, [])
+
+  useEffect(() => {
+    if (!hasHydratedLayout) return
+
+    persistAppShellLayoutState({
+      leftWidth,
+      rightWidth,
+      leftTopRatio,
+    })
+  }, [hasHydratedLayout, leftTopRatio, leftWidth, rightWidth])
 
   const resolvedRightPanel = rightPanel ?? slottedRightPanel
 

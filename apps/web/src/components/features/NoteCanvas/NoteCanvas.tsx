@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DefaultSizeStyle,
   DefaultToolbar,
@@ -169,6 +169,12 @@ export function NoteCanvas({
   )
 
   useAppShellRightPanel(rightPanelNode)
+
+  useEffect(() => {
+    if (!editor) return
+
+    editor.setStyleForNextShapes(DefaultSizeStyle, env.NEXT_PUBLIC_CANVAS_DEFAULT_STROKE_SIZE)
+  }, [editor])
 
   useOcrDebounce({
     editor,

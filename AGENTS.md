@@ -81,6 +81,21 @@ If a task is ambiguous, follow the TDD before inventing new structure or behavio
 - Backend env validation lives in `apps/api/src/config/env.ts`
 - Frontend env validation lives in `apps/web/src/config/env.ts`
 
+## Deployment Notes
+
+- Frontend deploys to Vercel from this repo's `footnote` project
+- Backend deploys to Railway from `apps/api`
+- Treat environment-variable changes as deploy-affecting changes, not just code changes
+- If you add, rename, remove, or tighten validation for env vars in `apps/api/src/config/env.ts` or `apps/web/src/config/env.ts`, update the corresponding variables in Railway or Vercel before or during deploy
+- Frontend env vars must be present in Vercel for the target environment and usually require a frontend redeploy to take effect
+- Backend env vars must be present in Railway for the target environment and usually trigger or require a backend redeploy to take effect
+- Agents may use the Vercel and Railway CLIs directly to inspect or update env vars, domains, and deployments when needed
+- Keep local env files aligned with the validated env schema so local dev matches deployed behavior
+- Backend CORS is driven by `FRONTEND_URL`; when the frontend domain changes, update Railway `FRONTEND_URL` to the exact allowed frontend origin(s)
+- If `FRONTEND_URL` supports multiple origins, make sure the deployed backend code matches that schema before setting a comma-separated value in Railway
+- tldraw licensing is configured on the frontend via `NEXT_PUBLIC_TLDRAW_LICENSE_KEY`; if the frontend domain changes, confirm the deployed domain is covered by the tldraw license
+- After env or domain changes, verify the real deployed app rather than assuming the dashboard state and code are already in sync
+
 ## Product Constraints
 
 - GridFS is the file store; do not introduce local file persistence or S3 for app data

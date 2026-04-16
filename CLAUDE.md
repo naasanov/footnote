@@ -63,6 +63,22 @@ The TDD is the source of truth. If something isn't covered by your ticket, check
 
 ---
 
+## Deployment Rules
+
+- **Frontend hosting** — Vercel project `footnote`.
+- **Backend hosting** — Railway service `api`.
+- **Env schema changes are deployment changes** — if you modify `apps/api/src/config/env.ts` or `apps/web/src/config/env.ts`, update the corresponding provider env vars as part of the same task.
+- **Vercel env changes** — adding or changing frontend env vars usually requires a frontend redeploy before the live site sees them.
+- **Railway env changes** — adding or changing backend env vars usually requires or triggers a backend redeploy before the live API sees them.
+- **CLI usage is allowed** — use the Vercel and Railway CLIs directly to inspect or update env vars, domains, and deployments when that is the fastest reliable path.
+- **Keep local env in sync** — update local `.env` or `.env.local` files when you change validated env vars so local dev reflects production assumptions.
+- **CORS coordination** — backend CORS is controlled by `FRONTEND_URL` in Railway. If the frontend domain changes, update `FRONTEND_URL` to the exact allowed origin(s) and verify the deployed backend code supports that format.
+- **Do not assume multi-origin env formats are backward-compatible** — if `FRONTEND_URL` changes from one URL to a comma-separated list, deploy the backend code that parses multiple origins before setting the Railway variable to a comma-separated value.
+- **tldraw license coordination** — the frontend requires `NEXT_PUBLIC_TLDRAW_LICENSE_KEY` in Vercel. If the production domain changes, confirm the new domain is covered by the tldraw license.
+- **Verify deploys after env/domain changes** — check the real deployed frontend and backend after updating env vars, especially for auth, CORS, and any `NEXT_PUBLIC_*` variables.
+
+---
+
 ## What Not To Do
 
 - Do not install Mongoose, Prisma, or any ORM/ODM.

@@ -107,6 +107,8 @@ interface UseOcrDebounceParams {
   onCanvasText: (params: { text: string; pipelineId: string; pipelineStartedAt: number }) => void
 }
 
+type FlushReason = 'debounce' | 'max-wait'
+
 function createPipelineId(noteId: string): string {
   return `${noteId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
@@ -133,12 +135,14 @@ export function useOcrDebounce({
       pipelineId: string,
       debounceScheduledAt: number,
       pipelineStartedAt: number,
+      flushReason: FlushReason,
     ) => {
       burstStartedAtRef.current = null
 
       if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
         console.info('[pipeline] debounce elapsed', {
           pipelineId,
+          flushReason,
           debounceMs: Math.round(pipelineStartedAt - debounceScheduledAt),
           noteId,
         })
@@ -189,7 +193,9 @@ export function useOcrDebounce({
                 pipelineId,
               })
 
-              resetRecentHandwritingShapeIds()
+              if (flushReason === 'debounce') {
+                resetRecentHandwritingShapeIds()
+              }
 
               if (text.trim()) {
                 nextTextEntries.push(text.trim())
@@ -232,11 +238,13 @@ export function useOcrDebounce({
       const elapsedInBurst = now - burstStartedAtRef.current
       const remainingMaxWait = Math.max(0, env.NEXT_PUBLIC_OCR_MAX_WAIT_MS - elapsedInBurst)
       const nextDelay = Math.min(env.NEXT_PUBLIC_OCR_DEBOUNCE_MS, remainingMaxWait)
+      const flushReason: FlushReason =
+        remainingMaxWait < env.NEXT_PUBLIC_OCR_DEBOUNCE_MS ? 'max-wait' : 'debounce'
 
       timerRef.current = setTimeout(() => {
         const pipelineId = createPipelineId(noteId)
         const pipelineStartedAt = performance.now()
-        void flushCanvasText(pipelineId, debounceScheduledAt, pipelineStartedAt)
+        void flushCanvasText(pipelineId, debounceScheduledAt, pipelineStartedAt, flushReason)
       }, nextDelay)
     }
 

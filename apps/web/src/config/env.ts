@@ -11,6 +11,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_RAG_BUFFER_MAX_TOKENS: z.coerce.number().int().positive().default(300),
   NEXT_PUBLIC_CANVAS_SAVE_DEBOUNCE_MS: z.coerce.number().int().positive().default(5000),
   NEXT_PUBLIC_OCR_SEARCH_MAX_ZOOM: z.coerce.number().positive().default(1),
+  NEXT_PUBLIC_CANVAS_RULED_STEP_PX: z.coerce.number().int().positive().default(64),
+  NEXT_PUBLIC_CANVAS_DEFAULT_STROKE_SIZE: z.enum(['s', 'm', 'l']).default('s'),
   NEXT_PUBLIC_RAG_DEBUG_TIMING: z
     .string()
     .optional()
@@ -32,6 +34,8 @@ const result = envSchema.safeParse({
   NEXT_PUBLIC_RAG_BUFFER_MAX_TOKENS: process.env.NEXT_PUBLIC_RAG_BUFFER_MAX_TOKENS,
   NEXT_PUBLIC_CANVAS_SAVE_DEBOUNCE_MS: process.env.NEXT_PUBLIC_CANVAS_SAVE_DEBOUNCE_MS,
   NEXT_PUBLIC_OCR_SEARCH_MAX_ZOOM: process.env.NEXT_PUBLIC_OCR_SEARCH_MAX_ZOOM,
+  NEXT_PUBLIC_CANVAS_RULED_STEP_PX: process.env.NEXT_PUBLIC_CANVAS_RULED_STEP_PX,
+  NEXT_PUBLIC_CANVAS_DEFAULT_STROKE_SIZE: process.env.NEXT_PUBLIC_CANVAS_DEFAULT_STROKE_SIZE,
   NEXT_PUBLIC_RAG_DEBUG_TIMING: process.env.NEXT_PUBLIC_RAG_DEBUG_TIMING,
   NEXT_PUBLIC_OCR_DEBUG: process.env.NEXT_PUBLIC_OCR_DEBUG,
 })
