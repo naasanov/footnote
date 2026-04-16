@@ -85,7 +85,18 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   });
 
   // Plugins
-  await fastify.register(cors, { origin: env.FRONTEND_URL });
+  const allowedOrigins = new Set(env.FRONTEND_URL);
+
+  await fastify.register(cors, {
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+    },
+  });
   // 100 MB file size limit
   await fastify.register(multipart, {
     limits: { fileSize: 100 * 1024 * 1024 },

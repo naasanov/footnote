@@ -1,13 +1,42 @@
 import 'dotenv/config'
 import { z } from 'zod'
 
+const frontendUrlSchema = z
+  .string()
+  .min(1)
+  .transform((value, ctx) => {
+    const urls = value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    if (urls.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'At least one frontend URL is required',
+      })
+      return z.NEVER
+    }
+
+    const invalidUrls = urls.filter((url) => !z.string().url().safeParse(url).success)
+    if (invalidUrls.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid frontend URL(s): ${invalidUrls.join(', ')}`,
+      })
+      return z.NEVER
+    }
+
+    return urls
+  })
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   MONGODB_URI: z.string().min(1),
   MONGODB_DB_NAME: z.string().min(1).default('footnote'),
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
-  FRONTEND_URL: z.string().url(),
+  FRONTEND_URL: frontendUrlSchema,
   OPENAI_API_KEY: z.string().min(1),
   ANTHROPIC_API_KEY: z.string().min(1),
   CITATION_MODEL: z.string().min(1).default('claude-sonnet-4-6'),
