@@ -70,9 +70,10 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
     }
 
     if (typeof (error as { statusCode?: unknown }).statusCode === "number") {
-      return reply.status((error as { statusCode: number }).statusCode).send({
-        error: error.name,
-        message: error.message,
+      const err = error as Error & { statusCode: number };
+      return reply.status(err.statusCode).send({
+        error: err.name,
+        message: err.message,
       });
     }
 
