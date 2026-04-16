@@ -1,0 +1,16 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: Footnote
+        - button "Collapse sidebar" [ref=e8] [cursor=pointer]:
+          - img [ref=e9]
+      - generic [ref=e13]: Loading…
+    - paragraph [ref=e16]: Loading…
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - button "Collapse right panel" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+        - generic [ref=e24]: Related
+      - paragraph [ref=e26]: Related passages will appear here
+  - region "Notifications alt+T"

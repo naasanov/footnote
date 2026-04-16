@@ -1,0 +1,67 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]:
+        - heading "Create your account" [level=1] [ref=e8]
+        - paragraph [ref=e9]: Welcome! Please fill in the details to get started.
+      - generic [ref=e10]:
+        - generic [ref=e12]:
+          - button "Sign in with Google Continue with Google" [disabled]:
+            - generic:
+              - generic:
+                - img "Sign in with Google"
+              - generic: Continue with Google
+        - paragraph [ref=e20]: or
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e24]:
+              - generic [ref=e26]:
+                - generic [ref=e27]:
+                  - generic: First name
+                  - generic: Optional
+                - textbox "First name" [disabled]
+              - generic [ref=e33]:
+                - generic [ref=e34]:
+                  - generic: Last name
+                  - generic: Optional
+                - textbox "Last name" [disabled]
+            - generic [ref=e41]:
+              - generic [ref=e42]:
+                - generic: Email address
+              - textbox "Email address" [disabled]:
+                - /placeholder: Enter your email address
+                - text: test@footnote.dev
+            - generic [ref=e47]:
+              - generic [ref=e48]:
+                - generic [ref=e49]:
+                  - generic: Password
+                - generic [ref=e51]:
+                  - textbox "Password" [disabled]:
+                    - /placeholder: Enter your password
+                    - text: TestPassword123!
+                  - button "Show password" [ref=e53] [cursor=pointer]:
+                    - img [ref=e54]
+              - generic [ref=e57]: Your password meets all the necessary requirements.
+              - paragraph [ref=e91]:
+                - img [ref=e92]
+                - text: Your password meets all the necessary requirements.
+          - generic [ref=e59]:
+            - button "Loading" [disabled]:
+              - generic:
+                - generic "Loading"
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - generic [ref=e66]: Already have an account?
+        - link "Sign in" [ref=e67] [cursor=pointer]:
+          - /url: http://localhost:3002/sign-in
+      - generic [ref=e69]:
+        - generic [ref=e71]:
+          - paragraph [ref=e72]: Secured by
+          - link "Clerk logo" [ref=e73] [cursor=pointer]:
+            - /url: https://go.clerk.com/components
+            - img [ref=e74]
+        - paragraph [ref=e79]: Development mode
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e85] [cursor=pointer]:
+    - img [ref=e86]
+  - alert [ref=e89]

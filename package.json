@@ -1,0 +1,22 @@
+{
+  "name": "footnote",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter api dev\" \"pnpm --filter web dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "esbuild",
+      "sharp"
+    ]
+  },
+  "dependencies": {
+    "@playwright/test": "^1.59.1",
+    "jspdf": "^4.2.1",
+    "svg2pdf.js": "^2.7.0"
+  }
+}

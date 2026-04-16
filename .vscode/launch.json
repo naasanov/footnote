@@ -2,12 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
-      // Runs Next.js dev server (localhost:3000)
+      // Runs Next.js dev server (localhost:3002)
       "name": "Frontend",
       "type": "node-terminal",
       "request": "launch",
       "command": "pnpm --filter web dev",
-      "cwd": "${workspaceFolder}"
+      "cwd": "${workspaceFolder}",
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
     },
     {
       // Runs Fastify with tsx watch (localhost:3001)

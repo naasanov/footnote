@@ -1,0 +1,39 @@
+- generic [ref=e1]:
+  - generic [ref=e62]:
+    - generic [ref=e63]:
+      - generic [ref=e65]:
+        - heading "Enter your password" [level=1] [ref=e66]
+        - paragraph [ref=e67]: Enter the password associated with your account
+        - generic [ref=e68]:
+          - paragraph [ref=e69]: devtest@example.com
+          - button "Edit" [ref=e70] [cursor=pointer]:
+            - img [ref=e71]
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - generic [ref=e79]: Password
+              - link "Forgot password?" [ref=e80] [cursor=pointer]:
+                - /url: ""
+            - generic [ref=e81]:
+              - textbox "Password" [active] [ref=e82]:
+                - /placeholder: Enter your password
+              - button "Show password" [ref=e83] [cursor=pointer]:
+                - img [ref=e84]
+          - button "Continue" [ref=e88] [cursor=pointer]:
+            - generic [ref=e89]:
+              - text: Continue
+              - img [ref=e90]
+        - link "Use another method" [ref=e93] [cursor=pointer]:
+          - /url: http://localhost:3002/sign-in/factor-one
+    - generic [ref=e96]:
+      - generic [ref=e98]:
+        - paragraph [ref=e99]: Secured by
+        - link "Clerk logo" [ref=e100] [cursor=pointer]:
+          - /url: https://go.clerk.com/components
+          - img [ref=e101]
+      - paragraph [ref=e106]: Development mode
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e58] [cursor=pointer]:
+    - img [ref=e59]
+  - alert [ref=e3]
