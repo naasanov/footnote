@@ -24,14 +24,8 @@ export async function uploadSource(
   formData.append('file', file)
   formData.append('scope', `${scopeType}:${scopeId}`)
 
-  const headers: Record<string, string> = {}
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-
-  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/sources`, {
+  const res = await apiFetch('/sources', async () => token, {
     method: 'POST',
-    headers,
     body: formData,
   })
   if (!res.ok) throw new Error('Failed to upload source')

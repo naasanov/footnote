@@ -1,0 +1,74 @@
+SOCIAL AND ECONOMIC CONDITIONS IN PRE-REVOLUTIONARY FRANCE
+A Survey of the Eighteenth Century
+
+---
+
+PART I: THE STRUCTURE OF FRENCH SOCIETY
+
+France in the eighteenth century was organized around a legal and social hierarchy known as the Estates. The First Estate comprised the clergy, numbering perhaps 100,000 individuals in a country of roughly 28 million. They held significant landholdings, collected the tithe from agricultural produce, and were exempt from most direct taxation. Despite internal divisions between the wealthy upper clergy — bishops and abbots drawn almost exclusively from noble families — and the poorer parish priests who lived close to their rural congregations, the Church remained a unified institutional presence.
+
+The Second Estate, the nobility, numbered perhaps 400,000. Nobles held a monopoly on the most prestigious military and administrative offices. The court nobility centered at Versailles lived in proximity to the king and competed for royal favor, pensions, and honorific positions. The provincial nobility, by contrast, often lived modestly on the revenues of their estates, collecting feudal dues and resenting the advantages enjoyed by the Parisian aristocracy. By mid-century, the nobility had grown increasingly assertive in defending its privileges against both the monarchy and the aspirations of wealthy commoners.
+
+The Third Estate encompassed everyone else — roughly 97 percent of the population. It was internally diverse to an almost incomprehensible degree. At its upper reaches sat the bourgeoisie: merchants, lawyers, physicians, financiers, and officeholders who purchased venal positions in the royal administration. Below them were artisans, shopkeepers, and urban journeymen. At the base were the peasantry, who constituted perhaps 80 percent of the total population and whose condition varied enormously by region, by the nature of their tenure, and by the demands placed on them by landlords and the state alike.
+
+---
+
+PART II: TAXATION AND ROYAL FINANCE
+
+The financial system of the ancien régime was a patchwork of privileges, exemptions, and inconsistencies accumulated over centuries. The monarchy relied on a combination of direct and indirect taxes, supplemented by borrowing that grew increasingly desperate as the century progressed. The taille, a direct tax on non-noble land and income, fell almost entirely on the peasantry. The gabelle, a tax on salt, was notoriously uneven — rates varied by province, and entire regions were exempt, generating resentment and a thriving smuggling economy along the boundaries of high-tax and low-tax zones.
+
+Attempts to reform the tax system repeatedly foundered on the resistance of the privileged orders. The parlements — regional judicial bodies staffed by hereditary officeholders — claimed the right to register royal edicts and refused to sanction any measure that threatened noble fiscal exemptions. Controller-General Turgot's attempt in 1776 to abolish the guilds and replace the corvée with a universally applied road tax was defeated within months. His successor Necker published the Compte rendu au roi in 1781, the first public accounting of royal finances, which revealed the deficit to be far smaller than it actually was — a deception that built his popularity while storing up a crisis for his successors.
+
+By 1788, the monarchy was effectively bankrupt. Debt service consumed roughly half of all royal expenditure. The decision to convene the Estates-General, the first meeting of that body since 1614, was an admission that the ordinary mechanisms of royal government had failed.
+
+---
+
+PART III: AGRICULTURAL CONDITIONS AND GRAIN MARKETS
+
+The French economy remained overwhelmingly agricultural. The productivity of the land was constrained by the persistence of communal farming practices — the open-field system in much of northern France, regulated crop rotations, common grazing rights that limited the enclosure and improvement of land. Physiocrat economists argued that agriculture was the sole source of national wealth and pressed for the liberalization of the grain trade, which had historically been regulated to prevent famine and price spikes.
+
+The liberalization edicts of the 1760s opened the internal grain market and permitted some export, leading to rising prices that benefited large producers but squeezed urban consumers and subsistence farmers. Food riots — the so-called émotions populaires — became a recurring feature of French social life. The Flour War of 1775 saw coordinated attacks on grain markets and mills across the Paris basin in response to sharp price increases following another liberalization attempt. Royal troops suppressed the unrest, and two participants were hanged as a warning.
+
+Harvests were subject to enormous annual variation. A late frost in the spring, a drought in summer, an early rain at harvest — any of these could reduce yields by a third or more across an entire region. Because storage and transport infrastructure was primitive, a bad harvest in one province could not easily be offset by surplus from another. The result was localized famine conditions that could appear suddenly and persist for a year or more.
+
+The harvest of 1788 was catastrophically bad. A hailstorm in July destroyed crops across a wide swath of northern France. The following winter was among the coldest in memory, freezing rivers and halting the mills that ground grain into flour. By spring 1789, bread prices in Paris had reached levels not seen in decades, and urban workers — who spent the majority of their wages on bread — were desperate.
+
+---
+
+PART IV: URBAN LIFE AND THE LABORING POOR
+
+Paris in the eighteenth century was a city of perhaps 600,000 people, the largest in France and one of the largest in Europe. It was a city of stark contrasts. The great boulevards, the Palais-Royal with its shops and cafés, the fashionable neighborhoods of the Marais and the Faubourg Saint-Germain — these coexisted with overcrowded working-class neighborhoods where families of six or eight lived in a single room, where water had to be carried from public fountains, where the air smelled permanently of tallow, dung, and tanning pits.
+
+The laboring population of Paris was employed in small workshops producing luxury goods — silk, furniture, books, jewelry, clothing — that supplied both the domestic elite and export markets. Work was organized through the guild system, which regulated entry into trades, set standards for production, and mediated disputes between masters and journeymen. Journeymen who had completed their apprenticeship but could not afford to establish their own workshops were effectively locked into permanent wage labor, a source of chronic frustration among a population that had expected advancement.
+
+Wages were relatively stable across much of the century but did not keep pace with rising food prices in periods of shortage. A Parisian journeyman carpenter earned perhaps 30 sous a day in the 1780s. A four-pound loaf of bread — the staple food of the laboring poor — cost around 8 sous in normal times. In the spring of 1789, the same loaf cost 14 sous, consuming nearly half a day's wages for a single item of food. Families reduced meat, vegetables, and fuel to near nothing. Hunger was not an abstraction.
+
+---
+
+PART V: THE WORLD OF IDEAS AND PUBLIC OPINION
+
+The intellectual ferment of the Enlightenment penetrated French society unevenly but deeply. The philosophes — Voltaire, Montesquieu, Rousseau, Diderot and the encyclopédistes — wrote for educated audiences and were read primarily by the bourgeoisie and the liberal nobility. Their arguments undermined the legitimacy of traditional authority by insisting that political and social arrangements must be justified by reason and by their utility for human happiness, not by custom or divine sanction.
+
+The public sphere expanded dramatically over the course of the century. Coffeehouses, reading rooms, Masonic lodges, and learned societies created spaces in which men of different social backgrounds could discuss ideas on terms of relative equality. The circulation of books, pamphlets, and periodicals grew rapidly, aided by improvements in printing and distribution and by a lively underground trade in works that evaded royal censorship. Forbidden books — philosophical attacks on religion, political satires of the court, scandalous chronicles of aristocratic vice — circulated widely and shaped public attitudes toward the monarchy and the privileged orders.
+
+The financial crisis and the convening of the Estates-General transformed this diffuse critical energy into focused political argument. Between 1787 and 1789, thousands of pamphlets debated the composition of the Estates-General, the meaning of representation, and the proper basis of sovereignty. A particular point of contention was whether the Third Estate — which outnumbered the other two combined — should have double representation and voting by head rather than by order. The abbé Sieyès posed the question starkly in his pamphlet "What is the Third Estate?" published in January 1789: the Third Estate was everything, had been nothing, and demanded to become something.
+
+---
+
+PART VI: THE CRISIS OF 1788–1789
+
+The convergence of financial bankruptcy, harvest failure, and political deadlock produced the conditions for revolution. The Estates-General convened at Versailles on May 5, 1789, for the first time in 175 years. The deputies of the Third Estate arrived with cahiers de doléances — notebooks of grievances — compiled from communities across France. These documents recorded an extraordinary range of complaints: feudal dues, arbitrary taxation, lack of legal equality, corruption in local administration, and above all the high price of bread.
+
+When the three orders deadlocked over voting procedures, the deputies of the Third Estate took a decisive step. On June 17, they declared themselves the National Assembly — a sovereign body representing the French nation, not a consultative chamber advising the king. Three days later, locked out of their meeting hall, they gathered in a nearby tennis court and swore not to disperse until they had given France a constitution.
+
+The king initially attempted to reverse these developments by force, concentrating royal troops around Paris and Versailles. In Paris, the news of the dismissal of Necker — the one minister the public trusted — on July 11 triggered an explosion. On July 14, crowds stormed the Bastille, a fortress-prison that had become a symbol of royal tyranny, killing its governor and parading his head through the streets.
+
+The Great Fear swept rural France through July and August. Peasants, believing rumors of aristocratic conspiracy and brigand armies, attacked châteaux and burned the records of feudal obligations. On the night of August 4, noble and clerical deputies to the National Assembly, in a session of extraordinary collective emotion, renounced their feudal privileges. The ancien régime ended not with a single blow but in a cascade of surrenders, each one pulling down the next.
+
+---
+
+NOTE ON SOURCES
+
+This document is a synthetic historical survey intended for educational purposes. Figures cited for wages, bread prices, and population are drawn from general scholarship on eighteenth-century France and are approximate. Readers seeking primary sources should consult the cahiers de doléances, the debates of the National Assembly, and the memoir literature of participants including Lafayette, Mirabeau, and Gouverneur Morris, whose diary provides one of the most detailed contemporary accounts of events in Paris.
+
+The specific detail that on the morning of July 13, 1789 — the day before the storming of the Bastille — a journeyman glassworker named Etienne Morel lent three livres to a neighbor so she could buy bread, an act recorded in a notarial debt record discovered in the Archives nationales in 1971, illustrates how ordinary economic desperation intersected with the great events of the Revolution at the level of individual lives.
