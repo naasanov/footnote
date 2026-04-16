@@ -3,6 +3,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
   NEXT_PUBLIC_API_URL: z.string().url(),
+  NEXT_PUBLIC_TLDRAW_LICENSE_KEY: z.string().min(1),
   NEXT_PUBLIC_OCR_DEBOUNCE_MS: z.coerce.number().int().positive().default(3000),
   NEXT_PUBLIC_OCR_MAX_WAIT_MS: z.coerce.number().int().positive().default(5000),
   NEXT_PUBLIC_OCR_SNAPSHOT_PADDING_PX: z.coerce.number().int().min(0).default(12),
@@ -23,6 +24,7 @@ const envSchema = z.object({
 const result = envSchema.safeParse({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_TLDRAW_LICENSE_KEY: process.env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY,
   NEXT_PUBLIC_OCR_DEBOUNCE_MS: process.env.NEXT_PUBLIC_OCR_DEBOUNCE_MS,
   NEXT_PUBLIC_OCR_MAX_WAIT_MS: process.env.NEXT_PUBLIC_OCR_MAX_WAIT_MS,
   NEXT_PUBLIC_OCR_SNAPSHOT_PADDING_PX: process.env.NEXT_PUBLIC_OCR_SNAPSHOT_PADDING_PX,

@@ -1,6 +1,5 @@
 import { apiFetch } from './client'
 import type { Source, SourceScopeType, UpdateSourceRequest } from '@/lib/types'
-import { env } from '@/config/env'
 
 type GetToken = () => Promise<string | null>
 
@@ -57,6 +56,8 @@ export async function renameSource(
   return res.json()
 }
 
-export function getSourceFileUrl(id: string): string {
-  return `${env.NEXT_PUBLIC_API_URL}/sources/${id}/file`
+export async function fetchSourceFile(getToken: GetToken, id: string): Promise<Blob> {
+  const res = await apiFetch(`/sources/${id}/file`, getToken)
+  if (!res.ok) throw new Error('Failed to fetch source file')
+  return res.blob()
 }

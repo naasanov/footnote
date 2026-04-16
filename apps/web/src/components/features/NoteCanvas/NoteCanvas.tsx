@@ -201,6 +201,7 @@ export function NoteCanvas({
       <div ref={attachDropTarget} className="h-full w-full relative">
         <Tldraw
           key={noteId}
+          licenseKey={env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY}
           persistenceKey={`footnote-note-${noteId}`}
           shapeUtils={[CitationChipShapeUtil as any]}
           overrides={uiOverrides}

@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import { Upload, Trash2, Eye } from 'lucide-react'
 import { useSources } from '@/hooks/useSources'
 import { useNote } from '@/hooks/useNote'
@@ -13,7 +14,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { getSourceFileUrl } from '@/lib/api/sources'
+import { fetchSourceFile } from '@/lib/api/sources'
 import { cn } from '@/lib/utils'
 import type { Source } from '@/lib/types'
 
@@ -248,9 +249,48 @@ interface SourcePreviewDialogProps {
 }
 
 function SourcePreviewDialog({ source, onClose }: SourcePreviewDialogProps) {
-  const fileUrl = getSourceFileUrl(source._id)
+  const { getToken } = useAuth()
+  const [fileUrl, setFileUrl] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
   const isImage = source.filename.match(/\.(png|jpe?g|gif|webp|bmp)$/i)
   const isPdf = source.filename.match(/\.pdf$/i) || source.filename === 'application/pdf'
+
+  useEffect(() => {
+    let objectUrl: string | null = null
+    let isCancelled = false
+
+    async function loadPreview() {
+      setIsLoading(true)
+      setHasError(false)
+
+      try {
+        const blob = await fetchSourceFile(getToken, source._id)
+        if (isCancelled) return
+
+        objectUrl = URL.createObjectURL(blob)
+        setFileUrl(objectUrl)
+      } catch {
+        if (!isCancelled) {
+          setHasError(true)
+          setFileUrl(null)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    void loadPreview()
+
+    return () => {
+      isCancelled = true
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [getToken, source._id])
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -259,7 +299,15 @@ function SourcePreviewDialog({ source, onClose }: SourcePreviewDialogProps) {
           <DialogTitle className="truncate">{source.filename}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 min-h-0 overflow-hidden rounded-sm border border-[#E8E2D9]">
-          {isImage ? (
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center bg-[#FAFAF8] text-sm text-[#78716C]">
+              Loading preview…
+            </div>
+          ) : hasError || !fileUrl ? (
+            <div className="flex h-full items-center justify-center bg-[#FAFAF8] px-6 text-center text-sm text-[#78716C]">
+              Unable to load this source preview.
+            </div>
+          ) : isImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={fileUrl}
