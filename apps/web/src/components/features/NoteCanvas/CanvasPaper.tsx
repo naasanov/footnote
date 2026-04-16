@@ -31,7 +31,7 @@ export function CanvasPaperPattern({ canvasBackground }: CanvasPaperBackgroundPr
       return null
     }
 
-    const patternStep = env.NEXT_PUBLIC_CANVAS_RULED_STEP_PX
+    const patternStep = env.NEXT_PUBLIC_CANVAS_PATTERN_STEP_PX
 
     if (canvasBackground === 'dotted') {
       const startX =
