@@ -7,7 +7,7 @@ const envSchema = z.object({
   MONGODB_DB_NAME: z.string().min(1).default('footnote'),
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
-  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  FRONTEND_URL: z.string().url(),
   OPENAI_API_KEY: z.string().min(1),
   ANTHROPIC_API_KEY: z.string().min(1),
   CITATION_MODEL: z.string().min(1).default('claude-sonnet-4-6'),

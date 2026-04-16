@@ -11,10 +11,12 @@ const envSchema = z.object({
   NEXT_PUBLIC_CANVAS_SAVE_DEBOUNCE_MS: z.coerce.number().int().positive().default(5000),
   NEXT_PUBLIC_OCR_SEARCH_MAX_ZOOM: z.coerce.number().positive().default(1),
   NEXT_PUBLIC_RAG_DEBUG_TIMING: z
-    .preprocess((value) => value ?? 'false', z.enum(['true', 'false']))
+    .string()
+    .optional()
     .transform((value) => value === 'true'),
   NEXT_PUBLIC_OCR_DEBUG: z
-    .preprocess((value) => value ?? 'false', z.enum(['true', 'false']))
+    .string()
+    .optional()
     .transform((value) => value === 'true'),
 })
 

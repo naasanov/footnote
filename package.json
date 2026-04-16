@@ -5,7 +5,8 @@
     "dev": "concurrently \"pnpm --filter api dev\" \"pnpm --filter web dev\""
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "next": "^15.1.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
