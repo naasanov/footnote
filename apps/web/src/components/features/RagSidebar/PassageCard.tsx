@@ -170,7 +170,7 @@ export function PassageCard({
         <div className="min-w-0 flex flex-1 items-start gap-2">
           <span
             aria-label={`Source ${sourceNumber}`}
-            className="mt-0.5 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-[11px] font-semibold text-white"
+            className="mt-0.5 inline-flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white"
             style={{ backgroundColor: sourceColor }}
           >
             {sourceNumber}

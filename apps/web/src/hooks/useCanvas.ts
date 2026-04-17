@@ -3,7 +3,7 @@
 import { useAuth } from '@clerk/nextjs'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { renderPlaintextFromRichText, type Editor, type TLShapeId } from 'tldraw'
+import { createShapeId, renderPlaintextFromRichText, type Editor, type TLShapeId } from 'tldraw'
 import { updateNote } from '@/lib/api/notes'
 import { env } from '@/config/env'
 import { getCitationChipDimensions } from '@/components/features/NoteCanvas/CitationChipShape'
@@ -331,7 +331,10 @@ export function useCanvas(
       const x = point.x - size.w / 2
       const y = point.y - size.h / 2
 
+      const shapeId = createShapeId()
+
       ;(editor as any).createShape({
+        id: shapeId,
         type: 'citation-chip',
         x,
         y,
@@ -341,6 +344,7 @@ export function useCanvas(
           ...size,
         },
       })
+      editor.bringToFront([shapeId])
     },
     [editor],
   )

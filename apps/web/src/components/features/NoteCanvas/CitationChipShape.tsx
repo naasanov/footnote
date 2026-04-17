@@ -57,12 +57,14 @@ export function CitationChipRenderProvider({
 const COLLAPSED_WIDTH = 104
 const COLLAPSED_HEIGHT = 48
 const EXPANDED_WIDTH = 320
-const EXPANDED_HEIGHT = 188
+const BASE_EXPANDED_HEIGHT = 124
 const CHIP_RADIUS = 24
 const MIN_COLLAPSED_WIDTH = 148
 const MAX_COLLAPSED_WIDTH = 240
 const MIN_EXPANDED_WIDTH = 280
 const MAX_EXPANDED_WIDTH = 420
+const MIN_EXPANDED_HEIGHT = 176
+const MAX_EXPANDED_HEIGHT = 320
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
@@ -82,6 +84,16 @@ function getExpandedWidth(locationLabel: string, detailText: string) {
   return clamp(Math.max(collapsedWidth + 28, contentDrivenWidth), MIN_EXPANDED_WIDTH, MAX_EXPANDED_WIDTH)
 }
 
+function getExpandedHeight(locationLabel: string, detailText: string) {
+  const width = getExpandedWidth(locationLabel, detailText)
+  const contentWidth = Math.max(width - 28, 220)
+  const charsPerLine = Math.max(20, Math.floor(contentWidth / 8))
+  const lineCount = Math.max(1, Math.ceil(detailText.trim().length / charsPerLine))
+  const contentDrivenHeight = BASE_EXPANDED_HEIGHT + lineCount * 24
+
+  return clamp(contentDrivenHeight, MIN_EXPANDED_HEIGHT, MAX_EXPANDED_HEIGHT)
+}
+
 export function getCitationChipDimensions(
   expanded: boolean,
   {
@@ -95,7 +107,7 @@ export function getCitationChipDimensions(
   return expanded
     ? {
         w: getExpandedWidth(locationLabel, detailText),
-        h: EXPANDED_HEIGHT,
+        h: getExpandedHeight(locationLabel, detailText),
       }
     : {
         w: getCollapsedWidth(locationLabel),
@@ -163,6 +175,7 @@ export class CitationChipShapeUtil extends BaseBoxShapeUtil<any> {
   }
 
   override onClick(shape: CitationChipShape) {
+    this.editor.bringToFront([shape.id])
     return getCitationChipTogglePatch(shape)
   }
 
@@ -184,6 +197,7 @@ export class CitationChipShapeUtil extends BaseBoxShapeUtil<any> {
             const sourceNumber = sourceNumbers[shape.props.sourceId]
             const sourceLabel = sourceNumber ? String(sourceNumber) : '?'
             const detailText = isOrphaned ? 'Source deleted' : shape.props.excerpt
+            const detailMaxHeight = Math.max(shape.props.h - 64, 0)
 
             return (
               <div
@@ -215,7 +229,7 @@ export class CitationChipShapeUtil extends BaseBoxShapeUtil<any> {
                   <div
                     className="overflow-hidden px-3.5 pb-3 transition-[max-height,opacity,transform] duration-250 ease-out"
                     style={{
-                      maxHeight: shape.props.expanded ? 160 : 0,
+                      maxHeight: shape.props.expanded ? detailMaxHeight : 0,
                       opacity: shape.props.expanded ? 1 : 0,
                       transform: shape.props.expanded ? 'translateY(0)' : 'translateY(-6px)',
                     }}
