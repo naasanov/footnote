@@ -32,7 +32,7 @@ interface UseRagSidebarReturn {
   isQuerying: boolean
   isSummarizing: boolean
   latestCanvasText: string
-  handleCanvasText: (params: { text: string; pipelineId: string; pipelineStartedAt: number }) => void
+  handleCanvasText: (params: CanvasTextPayload) => void
 }
 
 interface CanvasTextPayload {

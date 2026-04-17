@@ -5,6 +5,7 @@ import type { RagResult } from "@/lib/types";
 interface PassageCardProps {
   result: RagResult;
   sourceColor: string;
+  sourceNumber: number;
   isSummaryLoading: boolean;
   queryText: string;
 }
@@ -108,6 +109,7 @@ function SummaryPlaceholder() {
 export function PassageCard({
   result,
   sourceColor,
+  sourceNumber,
   isSummaryLoading,
   queryText,
 }: PassageCardProps) {
@@ -133,13 +135,22 @@ export function PassageCard({
       style={{ borderLeft: `3px solid ${sourceColor}` }}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold tracking-[0.01em] text-[#1C1917]">
-            {result.sourceName}
-          </p>
-          <p className="mt-1 text-[11px] text-[#78716C]">
-            {result.locationLabel}
-          </p>
+        <div className="min-w-0 flex flex-1 items-start gap-2">
+          <span
+            aria-label={`Source ${sourceNumber}`}
+            className="mt-0.5 inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-[11px] font-semibold text-white"
+            style={{ backgroundColor: sourceColor }}
+          >
+            {sourceNumber}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-semibold tracking-[0.01em] text-[#1C1917]">
+              {result.sourceName}
+            </p>
+            <p className="mt-1 text-[11px] text-[#78716C]">
+              {result.locationLabel}
+            </p>
+          </div>
         </div>
 
         <span className="rounded-full bg-[#F4EEE3] px-2 py-0.5 text-[11px] font-medium text-[#6B645C]">
