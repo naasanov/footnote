@@ -55,7 +55,7 @@ const MAX_LEFT_TOP_RATIO = 0.75
 const MIN_LEFT_WIDTH = 220
 const DEFAULT_LEFT_WIDTH = 240
 const MAX_LEFT_WIDTH = 420
-const MIN_RIGHT_WIDTH = 240
+const MIN_RIGHT_WIDTH = 320
 const DEFAULT_RIGHT_WIDTH = 300
 const MAX_RIGHT_WIDTH = 520
 const DEFAULT_LEFT_TOP_RATIO = 0.62
@@ -434,7 +434,7 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
                 Related
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto p-3">
+            <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3">
               {resolvedRightPanel ?? (
                 <p className="text-xs text-[#C8BFB0] text-center mt-8">
                   Related passages will appear here

@@ -89,11 +89,11 @@ export class ClaudeCitationService implements CitationService {
       text: chunk.text.slice(0, 1200),
     }));
 
-    const prompt = `You are helping a student find relevant passages in their course materials.
+    const prompt = `You are helping a student understand why a passage matched their writing.
 
 The student is writing about: "${query}"
 
-You will receive a JSON array of retrieved passages. For each passage, write one very short match label explaining the main idea that makes it relevant.
+You will receive a JSON array of retrieved passage excerpts. For each excerpt, write one very short explanation of why it matched the student's writing.
 
 Return JSON only, with this exact shape:
 {"results":[{"chunkId":"string","summary":"string"}]}
@@ -103,12 +103,13 @@ Rules:
 - Include one result for every input chunk.
 - Keep each summary to a single short sentence fragment or a very short sentence.
 - Prefer 6 to 14 words.
-- Start directly with the relevant concept, event, definition, claim, or mechanism.
-- Do not use filler like "This passage", "The passage", "It explains", or "It describes".
-- Avoid repeating the full chunk. Write the shortest useful reason the student would care.
+- Explain the relevance, not the excerpt overall.
+- Start directly with the matching concept, event, definition, claim, mechanism, or overlap.
+- Do not use filler like "This passage", "The excerpt", "It explains", "It describes", or "Matches because".
+- Avoid repeating the excerpt. Write the shortest useful reason the student would care.
 - Do not include markdown fences or any text outside the JSON.
 
-Passages:
+Excerpts:
 ${JSON.stringify(normalizedChunks)}`;
 
     let lastError: Error | undefined;

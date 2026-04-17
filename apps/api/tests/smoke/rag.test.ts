@@ -374,8 +374,78 @@ describe("RagService unit tests", () => {
     expect(results[0]!.matchScore).toBe(0.92);
     expect(results[1]!.matchScore).toBe(0.87);
     expect(results[2]!.matchScore).toBe(0.81);
-    expect(results[0]!.excerpt).toContain("cell division");
-    expect(results[1]!.excerpt).toContain("Cell division phases explained");
+    expect(results[0]!.excerpt).toBe(
+      "Lecture notes about mitosis explain the major phases of cell division in eukaryotic cells.",
+    );
+    expect(results[1]!.excerpt).toBe(
+      "Cell division phases explained with emphasis on mitosis and cytokinesis.",
+    );
+  });
+
+  it("prefers the best supporting sentence window over the first keyword match", async () => {
+    const frenchHistoryChunk = [
+      "French ship design, for example, was superior to that of the English, who routinely copied captured French men-of-war.",
+      "George Washington, the president of the United States, wishing to buy the best watch available anywhere, turned to the American minister in Paris, because the world's most accurate timepieces were still made in France.",
+      "Commerce, especially with the colonies, was an important area of change as well.",
+    ].join(" ");
+
+    const mockEmbeddingService = {
+      embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
+      embedBatch: vi.fn(),
+    };
+
+    const mockChunkRepo = {
+      ...chunkRepo,
+      vectorSearch: vi.fn().mockResolvedValue([
+        {
+          chunk: {
+            _id: new ObjectId(),
+            sourceId: TEST_SOURCE_ID,
+            userId: TEST_USER_ID,
+            text: frenchHistoryChunk,
+            locationLabel: "Page 42",
+            chunkIndex: 0,
+            embedding: [0.1, 0.2],
+            metadata: {
+              filename: "french-history.pdf",
+              locationLabel: "Page 42",
+              sourceId: TEST_SOURCE_ID.toHexString(),
+            },
+          },
+          score: 0.9,
+        },
+      ]),
+    };
+
+    const mockCitationService = {
+      summarize: vi.fn(),
+      summarizeBatch: vi.fn(),
+    };
+
+    const mockSourceRepo = {
+      ...sourceRepo,
+      findByIds: vi.fn().mockResolvedValue([
+        { filename: "french-history.pdf", _id: TEST_SOURCE_ID },
+      ]),
+    };
+
+    const ragService = new RagService(
+      mockEmbeddingService,
+      mockChunkRepo as unknown as ChunkRepository,
+      mockCitationService,
+      mockSourceRepo as unknown as SourceRepository,
+    );
+
+    const [result] = await ragService.query(
+      "George washington bought a watch from france",
+      [TEST_SOURCE_ID],
+      TEST_USER_ID,
+    );
+
+    expect(result).toBeDefined();
+    expect(result!.excerpt).toBe(
+      "George Washington, the president of the United States, wishing to buy the best watch available anywhere, turned to the American minister in Paris, because the world's most accurate timepieces were still made in France.",
+    );
   });
 
   it("summarizes existing rag results in a follow-up step", async () => {
@@ -409,7 +479,7 @@ describe("RagService unit tests", () => {
     const summaries = await ragService.summarize("cell division", [
       {
         chunkId: "chunk-0",
-        fullText: "Lecture notes about mitosis",
+        excerpt: "Lecture notes about mitosis",
         locationLabel: "Page 1",
         sourceFilename: "biology.pdf",
       },

@@ -55,6 +55,39 @@ function getTextShapeContent(editor: Editor, shape: unknown): string {
   return ''
 }
 
+function getInsertedText(previousText: string, nextText: string): string {
+  if (!nextText || nextText === previousText) {
+    return ''
+  }
+
+  let prefixLength = 0
+  const maxPrefixLength = Math.min(previousText.length, nextText.length)
+
+  while (
+    prefixLength < maxPrefixLength &&
+    previousText[prefixLength] === nextText[prefixLength]
+  ) {
+    prefixLength += 1
+  }
+
+  let suffixLength = 0
+  const previousRemainingLength = previousText.length - prefixLength
+  const nextRemainingLength = nextText.length - prefixLength
+  const maxSuffixLength = Math.min(previousRemainingLength, nextRemainingLength)
+
+  while (
+    suffixLength < maxSuffixLength &&
+    previousText[previousText.length - 1 - suffixLength] ===
+      nextText[nextText.length - 1 - suffixLength]
+  ) {
+    suffixLength += 1
+  }
+
+  const insertedText = nextText.slice(prefixLength, nextText.length - suffixLength)
+
+  return insertedText.trim() ? insertedText : ''
+}
+
 function getTrackedShapeIds(editor: Editor): Set<string> {
   const ids = new Set<string>()
 
@@ -157,10 +190,11 @@ export function useCanvas(
         const previousText = knownTextByShapeIdRef.current.get(id) ?? ''
 
         if (text !== previousText) {
-          if (text) {
-            recentTypedTextRef.current.set(id, text)
-          } else {
-            recentTypedTextRef.current.delete(id)
+          const insertedText = getInsertedText(previousText, text)
+
+          if (insertedText) {
+            const pendingText = recentTypedTextRef.current.get(id) ?? ''
+            recentTypedTextRef.current.set(id, `${pendingText}${insertedText}`)
           }
         }
       }
@@ -248,19 +282,16 @@ export function useCanvas(
       return []
     }
 
-    const recentTextEntries = [...recentTypedTextRef.current.entries()]
-
-    return recentTextEntries
-      .filter(([id]) => {
+    return [...recentTypedTextRef.current.entries()]
+      .filter(([id, text]) => {
         const shape = editor.getShape(id as TLShapeId)
-        if (!shape || shape.type !== 'text') {
+        if (!shape || shape.type !== 'text' || !text.trim()) {
           recentTypedTextRef.current.delete(id)
           return false
         }
 
         return true
       })
-      .sort(([leftId], [rightId]) => leftId.localeCompare(rightId))
       .map(([, text]) => text)
       .filter(Boolean)
   }, [editor])

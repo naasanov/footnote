@@ -104,7 +104,12 @@ interface UseOcrDebounceParams {
   getRecentStrokeBounds: () => OcrBbox | null
   resetRecentHandwritingShapeIds: () => void
   resetRecentTypedText: () => void
-  onCanvasText: (params: { text: string; pipelineId: string; pipelineStartedAt: number }) => void
+  onCanvasText: (params: {
+    text: string
+    pipelineId: string
+    pipelineStartedAt: number
+    flushReason: FlushReason
+  }) => void
 }
 
 type FlushReason = 'debounce' | 'max-wait'
@@ -125,22 +130,24 @@ export function useOcrDebounce({
   onCanvasText,
 }: UseOcrDebounceParams) {
   const { getToken } = useAuth()
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const burstStartedAtRef = useRef<number | null>(null)
+  const handwritingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handwritingBurstStartedAtRef = useRef<number | null>(null)
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const typingBurstStartedAtRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!editor || !noteId) return
 
-    const flushCanvasText = async (
+    const flushTypedText = async (
       pipelineId: string,
       debounceScheduledAt: number,
       pipelineStartedAt: number,
       flushReason: FlushReason,
     ) => {
-      burstStartedAtRef.current = null
+      typingBurstStartedAtRef.current = null
 
       if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
-        console.info('[pipeline] debounce elapsed', {
+        console.info('[pipeline] typing debounce elapsed', {
           pipelineId,
           flushReason,
           debounceMs: Math.round(pipelineStartedAt - debounceScheduledAt),
@@ -153,110 +160,179 @@ export function useOcrDebounce({
       }
 
       const typedText = getRecentTypedText()
-      const shapeIds = getRecentShapeIds()
-      if (typedText.length === 0 && shapeIds.length === 0) {
-        return
-      }
+      const combinedText = typedText
+        .filter((entry) => entry.trim())
+        .join('\n')
+        .trim()
 
-      const nextTextEntries = typedText
-        .map((entry) => entry.trim())
-        .filter(Boolean)
-
-      if (nextTextEntries.length > 0) {
-        resetRecentTypedText()
-      }
-
-      if (shapeIds.length > 0) {
-        const bounds = getRecentStrokeBounds()
-        if (bounds) {
-          const snapshotStartedAt = performance.now()
-          const imageBase64 = await exportSnapshotBase64(editor, shapeIds, bounds)
-
-          if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
-            console.info('[pipeline] snapshot export completed', {
-              pipelineId,
-              durationMs: Math.round(performance.now() - snapshotStartedAt),
-              shapeCount: shapeIds.length,
-            })
-          }
-
-          if (imageBase64) {
-            const snapshotKey = shapeIds.join(',')
-
-            try {
-              const { text } = await transcribeCanvas(getToken, {
-                imageBase64,
-                mimeType: 'image/png',
-                noteId,
-                snapshotKey,
-                bbox: bounds,
-                pipelineId,
-              })
-
-              if (flushReason === 'debounce') {
-                resetRecentHandwritingShapeIds()
-              }
-
-              if (text.trim()) {
-                nextTextEntries.push(text.trim())
-              }
-            } catch {
-              // Fail quietly: OCR should not interrupt writing flow.
-            }
-          }
-        }
-      }
-
-      const combinedText = nextTextEntries.join('\n').trim()
       if (!combinedText) {
         return
       }
 
+      resetRecentTypedText()
+
       if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
-        console.info('[pipeline] canvas text ready', {
+        console.info('[pipeline] typed canvas text ready', {
           pipelineId,
           totalPreRagMs: Math.round(performance.now() - pipelineStartedAt),
           textLength: combinedText.length,
         })
       }
 
-      onCanvasText({ text: combinedText, pipelineId, pipelineStartedAt })
+      onCanvasText({ text: combinedText, pipelineId, pipelineStartedAt, flushReason })
     }
 
-    const handleChange = () => {
-      const now = performance.now()
+    const flushHandwritingText = async (
+      pipelineId: string,
+      debounceScheduledAt: number,
+      pipelineStartedAt: number,
+      flushReason: FlushReason,
+    ) => {
+      handwritingBurstStartedAtRef.current = null
+
+      if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
+        console.info('[pipeline] handwriting debounce elapsed', {
+          pipelineId,
+          flushReason,
+          debounceMs: Math.round(pipelineStartedAt - debounceScheduledAt),
+          noteId,
+        })
+      }
+
+      if (activeSourceIds.length === 0) {
+        return
+      }
+
+      const shapeIds = getRecentShapeIds()
+      if (shapeIds.length === 0) {
+        return
+      }
+
+      const bounds = getRecentStrokeBounds()
+      if (bounds) {
+        const snapshotStartedAt = performance.now()
+        const imageBase64 = await exportSnapshotBase64(editor, shapeIds, bounds)
+
+        if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
+          console.info('[pipeline] snapshot export completed', {
+            pipelineId,
+            durationMs: Math.round(performance.now() - snapshotStartedAt),
+            shapeCount: shapeIds.length,
+          })
+        }
+
+        if (imageBase64) {
+          const snapshotKey = shapeIds.join(',')
+
+          try {
+            const { text } = await transcribeCanvas(getToken, {
+              imageBase64,
+              mimeType: 'image/png',
+              noteId,
+              snapshotKey,
+              bbox: bounds,
+              pipelineId,
+            })
+
+            if (flushReason === 'debounce') {
+              resetRecentHandwritingShapeIds()
+            }
+
+            const combinedText = text.trim()
+            if (!combinedText) {
+              return
+            }
+
+            if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
+              console.info('[pipeline] handwritten canvas text ready', {
+                pipelineId,
+                totalPreRagMs: Math.round(performance.now() - pipelineStartedAt),
+                textLength: combinedText.length,
+              })
+            }
+
+            onCanvasText({ text: combinedText, pipelineId, pipelineStartedAt, flushReason })
+          } catch {
+            // Fail quietly: OCR should not interrupt writing flow.
+          }
+        }
+      }
+    }
+
+    const scheduleTypedFlush = (now: number) => {
       const debounceScheduledAt = now
 
-      if (burstStartedAtRef.current === null) {
-        burstStartedAtRef.current = now
+      if (typingBurstStartedAtRef.current === null) {
+        typingBurstStartedAtRef.current = now
       }
 
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current)
       }
 
-      const elapsedInBurst = now - burstStartedAtRef.current
+      const elapsedInBurst = now - typingBurstStartedAtRef.current
       const remainingMaxWait = Math.max(0, env.NEXT_PUBLIC_OCR_MAX_WAIT_MS - elapsedInBurst)
       const nextDelay = Math.min(env.NEXT_PUBLIC_OCR_DEBOUNCE_MS, remainingMaxWait)
       const flushReason: FlushReason =
         remainingMaxWait < env.NEXT_PUBLIC_OCR_DEBOUNCE_MS ? 'max-wait' : 'debounce'
 
-      timerRef.current = setTimeout(() => {
+      typingTimerRef.current = setTimeout(() => {
         const pipelineId = createPipelineId(noteId)
         const pipelineStartedAt = performance.now()
-        void flushCanvasText(pipelineId, debounceScheduledAt, pipelineStartedAt, flushReason)
+        void flushTypedText(pipelineId, debounceScheduledAt, pipelineStartedAt, flushReason)
       }, nextDelay)
+    }
+
+    const scheduleHandwritingFlush = (now: number) => {
+      const debounceScheduledAt = now
+
+      if (handwritingBurstStartedAtRef.current === null) {
+        handwritingBurstStartedAtRef.current = now
+      }
+
+      if (handwritingTimerRef.current) {
+        clearTimeout(handwritingTimerRef.current)
+      }
+
+      const elapsedInBurst = now - handwritingBurstStartedAtRef.current
+      const remainingMaxWait = Math.max(0, env.NEXT_PUBLIC_OCR_MAX_WAIT_MS - elapsedInBurst)
+      const nextDelay = Math.min(env.NEXT_PUBLIC_OCR_DEBOUNCE_MS, remainingMaxWait)
+      const flushReason: FlushReason =
+        remainingMaxWait < env.NEXT_PUBLIC_OCR_DEBOUNCE_MS ? 'max-wait' : 'debounce'
+
+      handwritingTimerRef.current = setTimeout(() => {
+        const pipelineId = createPipelineId(noteId)
+        const pipelineStartedAt = performance.now()
+        void flushHandwritingText(pipelineId, debounceScheduledAt, pipelineStartedAt, flushReason)
+      }, nextDelay)
+    }
+
+    const handleChange = () => {
+      const now = performance.now()
+
+      if (getRecentTypedText().length > 0) {
+        scheduleTypedFlush(now)
+      }
+
+      if (getRecentShapeIds().length > 0) {
+        scheduleHandwritingFlush(now)
+      }
     }
 
     const unlisten = editor.store.listen(handleChange)
 
     return () => {
       unlisten()
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-        timerRef.current = null
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current)
+        typingTimerRef.current = null
       }
-      burstStartedAtRef.current = null
+      if (handwritingTimerRef.current) {
+        clearTimeout(handwritingTimerRef.current)
+        handwritingTimerRef.current = null
+      }
+      typingBurstStartedAtRef.current = null
+      handwritingBurstStartedAtRef.current = null
     }
   }, [
     activeSourceIds,

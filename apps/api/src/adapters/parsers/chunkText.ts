@@ -1,3 +1,31 @@
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+
+// Estimate: 1 token ~= 4 chars
+const TARGET_CHARS = 2000; // ~500 tokens
+const OVERLAP_CHARS = 400; // ~100 tokens
+
+const splitter = new RecursiveCharacterTextSplitter({
+  chunkSize: TARGET_CHARS,
+  chunkOverlap: OVERLAP_CHARS,
+  keepSeparator: false,
+  separators: ["\n\n", "\n", ". ", "! ", "? ", "; ", ", ", " ", ""],
+});
+
+/**
+ * Splits text into chunks of ~500 tokens with 100-token overlap.
+ * Prefers paragraph, newline, sentence, and word boundaries in that order.
+ */
+export async function splitIntoChunks(text: string): Promise<string[]> {
+  const trimmed = text.trim();
+  if (!trimmed) return [];
+  if (trimmed.length <= TARGET_CHARS) return [trimmed];
+
+  const chunks = await splitter.splitText(trimmed);
+
+  return chunks.map((chunk) => chunk.trim()).filter(Boolean);
+}
+
+/*
 // Estimate: 1 token ≈ 4 chars
 const TARGET_CHARS = 2000  // ~500 tokens
 const OVERLAP_CHARS = 400  // ~100 tokens
@@ -33,11 +61,6 @@ function clampToWordEnd(text: string, index: number, minIndex: number): number {
   return cursor
 }
 
-/**
- * Splits text into chunks of ~500 tokens with 100-token overlap.
- * Prefers paragraph boundaries, falls back to sentence boundaries,
- * then hard-splits at the character limit.
- */
 export function splitIntoChunks(text: string): string[] {
   const trimmed = text.trim()
   if (!trimmed) return []
@@ -89,3 +112,5 @@ export function splitIntoChunks(text: string): string[] {
 
   return chunks
 }
+
+*/

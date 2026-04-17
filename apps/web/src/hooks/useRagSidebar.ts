@@ -24,8 +24,11 @@ function trimBuffer(buffer: string[]): string[] {
   return next
 }
 
+type FlushReason = 'debounce' | 'max-wait'
+
 interface UseRagSidebarReturn {
   ragResults: RagResult[]
+  displayedResultsVersion: number
   isQuerying: boolean
   isSummarizing: boolean
   latestCanvasText: string
@@ -36,6 +39,7 @@ interface CanvasTextPayload {
   text: string
   pipelineId: string
   pipelineStartedAt: number
+  flushReason: FlushReason
 }
 
 export function useRagSidebar(noteId: string, activeSourceIds: string[]): UseRagSidebarReturn {
@@ -43,8 +47,10 @@ export function useRagSidebar(noteId: string, activeSourceIds: string[]): UseRag
   const bufferRef = useRef<string[]>([])
   const queryIdRef = useRef(0)
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ragResultsRef = useRef<RagResult[]>([])
 
   const [ragResults, setRagResults] = useState<RagResult[]>([])
+  const [displayedResultsVersion, setDisplayedResultsVersion] = useState(0)
   const [isQuerying, setIsQuerying] = useState(false)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [latestCanvasText, setLatestCanvasText] = useState('')
@@ -58,19 +64,59 @@ export function useRagSidebar(noteId: string, activeSourceIds: string[]): UseRag
     }
   }, [])
 
-  const handleCanvasText = useCallback(
-    ({ text, pipelineId, pipelineStartedAt }: CanvasTextPayload) => {
-      setLatestCanvasText(text)
+  useEffect(() => {
+    ragResultsRef.current = ragResults
+  }, [ragResults])
 
-      if (!text.trim() || !noteId || activeSourceIds.length === 0) {
+  useEffect(() => {
+    bufferRef.current = []
+    queryIdRef.current += 1
+
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current)
+      pollTimerRef.current = null
+    }
+
+    setLatestCanvasText('')
+    setIsQuerying(false)
+    setIsSummarizing(false)
+    setRagResults([])
+    setDisplayedResultsVersion((currentVersion) => currentVersion + 1)
+  }, [noteId])
+
+  useEffect(() => {
+    if (activeSourceIds.length > 0) {
+      return
+    }
+
+    bufferRef.current = []
+    queryIdRef.current += 1
+
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current)
+      pollTimerRef.current = null
+    }
+
+    setIsQuerying(false)
+    setIsSummarizing(false)
+    setRagResults([])
+    setDisplayedResultsVersion((currentVersion) => currentVersion + 1)
+  }, [activeSourceIds])
+
+  const handleCanvasText = useCallback(
+    ({ text, pipelineId, pipelineStartedAt, flushReason }: CanvasTextPayload) => {
+      const nextBuffer = trimBuffer([...bufferRef.current, text.trim()])
+      const queryText = nextBuffer.join(' ').trim()
+
+      setLatestCanvasText(queryText)
+
+      if (!text.trim() || !queryText || !noteId || activeSourceIds.length === 0) {
         return
       }
 
-      bufferRef.current = trimBuffer([...bufferRef.current, text.trim()])
-
-      const queryText = bufferRef.current.join(' ')
-      if (!queryText.trim()) {
-        return
+      bufferRef.current = nextBuffer
+      if (flushReason === 'debounce') {
+        bufferRef.current = []
       }
 
       const queryId = queryIdRef.current + 1
@@ -86,7 +132,17 @@ export function useRagSidebar(noteId: string, activeSourceIds: string[]): UseRag
       void queryRag(getToken, queryText, activeSourceIds, pipelineId)
         .then((response) => {
           if (queryIdRef.current !== queryId) return
-          setRagResults(response.chunks)
+          const currentResults = ragResultsRef.current
+          const nextResults = response.chunks
+          const isSameResultSet =
+            currentResults.length === nextResults.length &&
+            currentResults.every((result, index) => result.chunkId === nextResults[index]?.chunkId)
+
+          if (!isSameResultSet) {
+            setDisplayedResultsVersion((currentVersion) => currentVersion + 1)
+          }
+
+          setRagResults(nextResults)
           setIsQuerying(false)
 
           if (env.NEXT_PUBLIC_RAG_DEBUG_TIMING) {
@@ -167,6 +223,7 @@ export function useRagSidebar(noteId: string, activeSourceIds: string[]): UseRag
 
   return {
     ragResults,
+    displayedResultsVersion,
     isQuerying,
     isSummarizing,
     latestCanvasText,

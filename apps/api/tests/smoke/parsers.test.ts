@@ -66,12 +66,12 @@ describe("Parser smoke tests", () => {
     );
   });
 
-  it("splitIntoChunks prefers word-safe hard boundaries", () => {
+  it("splitIntoChunks prefers word-safe hard boundaries", async () => {
     const repeatedSentence =
       "Photosynthesis allows plants to convert light energy into chemical energy for growth. ";
     const text = repeatedSentence.repeat(80);
 
-    const chunks = splitIntoChunks(text);
+    const chunks = await splitIntoChunks(text);
 
     expect(chunks.length).toBeGreaterThan(1);
     expect(chunks.every((chunk) => !chunk.startsWith("nergy"))).toBe(true);

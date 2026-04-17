@@ -19,7 +19,7 @@ export class MarkdownParser implements SourceParser {
     const results: ParsedChunk[] = [];
 
     for (const section of sections) {
-      const textChunks = splitIntoChunks(section.text);
+      const textChunks = await splitIntoChunks(section.text);
       for (const chunkText of textChunks) {
         results.push({
           text: chunkText,

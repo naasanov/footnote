@@ -16,7 +16,7 @@ export class PdfParser implements SourceParser {
     for (const page of textResult.pages) {
       const pageText = page.text
       const pageNum = page.num
-      const textChunks = splitIntoChunks(pageText)
+      const textChunks = await splitIntoChunks(pageText)
 
       for (const chunkText of textChunks) {
         results.push({

@@ -10,7 +10,7 @@ export class DocxParser implements SourceParser {
 
   async parse(buffer: Buffer, _filename: string): Promise<ParsedChunk[]> {
     const result = await mammoth.extractRawText({ buffer });
-    const chunks = splitIntoChunks(result.value);
+    const chunks = await splitIntoChunks(result.value);
 
     return chunks.map((text, index) => ({
       text,

@@ -1,8 +1,8 @@
 import type { FastifyBaseLogger } from "fastify";
 import { ObjectId } from "mongodb";
-import { env } from "../config/env.js";
 import type { CitationService } from "../adapters/citation/CitationService.js";
 import type { EmbeddingService } from "../adapters/embeddings/EmbeddingService.js";
+import { env } from "../config/env.js";
 import type { ChunkRepository } from "../repositories/chunk.repository.js";
 import type { SourceRepository } from "../repositories/source.repository.js";
 
@@ -54,43 +54,90 @@ function extractQueryTerms(query: string): string[] {
   return [...new Set(words)].sort((a, b) => b.length - a.length);
 }
 
-function trimToWordBoundaryStart(text: string, index: number): number {
-  if (index <= 0) return 0;
-
-  const nextSpace = text.indexOf(" ", index);
-  if (nextSpace === -1) return index;
-
-  // Prefer moving to the next full word start to avoid clipped beginnings.
-  return Math.min(nextSpace + 1, text.length);
+interface SentenceSegment {
+  text: string;
+  start: number;
+  end: number;
 }
 
-function trimToWordBoundaryEnd(text: string, index: number): number {
-  if (index >= text.length) return text.length;
+function splitIntoSentenceSegments(text: string): SentenceSegment[] {
+  const segments: SentenceSegment[] = [];
+  const sentenceRegex = /[^.!?\n]+(?:[.!?]+(?=\s|$)|$)/g;
 
-  const previousSpace = text.lastIndexOf(" ", index);
-  if (previousSpace === -1) return index;
+  for (const match of text.matchAll(sentenceRegex)) {
+    const rawText = match[0];
+    const start = match.index ?? 0;
+    const trimmedText = rawText.trim();
 
-  return Math.max(previousSpace, 0);
-}
+    if (!trimmedText) {
+      continue;
+    }
 
-function buildSnippet(text: string, anchorIndex: number, targetLength = 220): string {
-  const snippetRadius = Math.floor(targetLength * 0.45);
-  let start = Math.max(0, anchorIndex - snippetRadius);
-  let end = Math.min(text.length, start + targetLength);
+    const leadingWhitespace = rawText.search(/\S/);
+    const normalizedStart =
+      start + (leadingWhitespace >= 0 ? leadingWhitespace : 0);
+    const normalizedEnd = normalizedStart + trimmedText.length;
 
-  start = trimToWordBoundaryStart(text, start);
-  end = trimToWordBoundaryEnd(text, end);
-
-  if (end <= start) {
-    start = Math.max(0, anchorIndex - Math.floor(targetLength / 2));
-    end = Math.min(text.length, start + targetLength);
+    segments.push({
+      text: trimmedText,
+      start: normalizedStart,
+      end: normalizedEnd,
+    });
   }
 
-  const snippet = text.slice(start, end).trim();
+  return segments;
+}
 
-  const prefix = start > 0 ? "..." : "";
-  const suffix = end < text.length ? "..." : "";
-  return `${prefix}${snippet}${suffix}`;
+function buildSnippet(text: string, start: number, end: number): string {
+  const snippet = text.slice(start, end).trim();
+  return snippet;
+}
+
+function countTermOccurrences(text: string, term: string): number {
+  const matches = text.match(new RegExp(`\\b${term}\\b`, "g"));
+  return matches?.length ?? 0;
+}
+
+function scoreSentenceWindow(windowText: string, queryTerms: string[]): number {
+  const loweredWindow = windowText.toLowerCase();
+
+  let score = 0;
+  let matchedTerms = 0;
+  const matchPositions: number[] = [];
+
+  for (const term of queryTerms) {
+    const index = loweredWindow.indexOf(term);
+    if (index === -1) {
+      continue;
+    }
+
+    matchedTerms += 1;
+    matchPositions.push(index);
+    score += 3;
+    score += Math.min(countTermOccurrences(loweredWindow, term), 2);
+  }
+
+  if (matchedTerms === 0) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  score += matchedTerms * matchedTerms;
+
+  if (matchedTerms >= 2) {
+    const proximity = Math.max(...matchPositions) - Math.min(...matchPositions);
+    score += proximity <= 80 ? 4 : proximity <= 140 ? 2 : 0;
+  }
+
+  const wordCount = windowText.split(/\s+/).filter(Boolean).length;
+  if (wordCount >= 8 && wordCount <= 40) {
+    score += 2;
+  } else if (wordCount < 5) {
+    score -= 2;
+  } else if (wordCount > 55) {
+    score -= 1;
+  }
+
+  return score;
 }
 
 function extractContextualSnippet(fullText: string, query: string): string {
@@ -98,15 +145,52 @@ function extractContextualSnippet(fullText: string, query: string): string {
   if (!normalizedText) return "";
 
   const queryTerms = extractQueryTerms(query);
+  const sentenceSegments = splitIntoSentenceSegments(normalizedText);
 
-  for (const term of queryTerms) {
-    const matchIndex = normalizedText.toLowerCase().indexOf(term);
-    if (matchIndex >= 0) {
-      return buildSnippet(normalizedText, matchIndex);
+  if (sentenceSegments.length === 0) {
+    return normalizedText;
+  }
+
+  let bestSnippet = "";
+  let bestScore = Number.NEGATIVE_INFINITY;
+  let bestStart = Number.POSITIVE_INFINITY;
+
+  for (let index = 0; index < sentenceSegments.length; index += 1) {
+    const current = sentenceSegments[index]!;
+    const singleSentenceScore = scoreSentenceWindow(current.text, queryTerms);
+
+    if (
+      singleSentenceScore > bestScore ||
+      (singleSentenceScore === bestScore && current.start < bestStart)
+    ) {
+      bestScore = singleSentenceScore;
+      bestStart = current.start;
+      bestSnippet = buildSnippet(normalizedText, current.start, current.end);
+    }
+
+    const next = sentenceSegments[index + 1];
+    if (!next) {
+      continue;
+    }
+
+    const combinedText = `${current.text} ${next.text}`;
+    const combinedScore = scoreSentenceWindow(combinedText, queryTerms) - 1;
+
+    if (
+      combinedScore > bestScore ||
+      (combinedScore === bestScore && current.start < bestStart)
+    ) {
+      bestScore = combinedScore;
+      bestStart = current.start;
+      bestSnippet = buildSnippet(normalizedText, current.start, next.end);
     }
   }
 
-  return buildSnippet(normalizedText, 0);
+  if (bestSnippet) {
+    return bestSnippet;
+  }
+
+  return sentenceSegments[0]?.text ?? normalizedText;
 }
 
 export class RagService {
@@ -132,9 +216,15 @@ export class RagService {
     const embedDurationMs = performance.now() - embedStartedAt;
 
     const vectorSearchStartedAt = performance.now();
-    const rawChunks = await this.chunkRepo.vectorSearch(embedding, sourceIds, 3);
+    const rawChunks = await this.chunkRepo.vectorSearch(
+      embedding,
+      sourceIds,
+      3,
+    );
     const vectorSearchDurationMs = performance.now() - vectorSearchStartedAt;
-    const chunks = rawChunks.filter(({ score }) => score >= env.RAG_MIN_MATCH_SCORE);
+    const chunks = rawChunks.filter(
+      ({ score }) => score >= env.RAG_MIN_MATCH_SCORE,
+    );
 
     if (chunks.length === 0) {
       this.logTimings({
@@ -198,7 +288,7 @@ export class RagService {
     text: string,
     results: Pick<
       RagResult,
-      "chunkId" | "fullText" | "locationLabel" | "sourceFilename"
+      "chunkId" | "excerpt" | "locationLabel" | "sourceFilename"
     >[],
   ): Promise<Array<{ chunkId: string; summary: string }>> {
     if (!text.trim() || results.length === 0) return [];
@@ -210,7 +300,7 @@ export class RagService {
         text,
         results.map((result) => ({
           chunkId: result.chunkId,
-          text: result.fullText,
+          text: result.excerpt,
           locationLabel: result.locationLabel,
           filename: result.sourceFilename,
         })),

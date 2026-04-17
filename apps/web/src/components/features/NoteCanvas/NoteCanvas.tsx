@@ -129,8 +129,14 @@ export function NoteCanvas({
     resetRecentTypedText,
     updateCanvasBackground,
   } = useCanvas(editor, noteId, initialCanvasBackground)
-  const { ragResults, isQuerying, isSummarizing, latestCanvasText, handleCanvasText } =
-    useRagSidebar(noteId, activeSourceIds)
+  const {
+    ragResults,
+    displayedResultsVersion,
+    isQuerying,
+    isSummarizing,
+    latestCanvasText,
+    handleCanvasText,
+  } = useRagSidebar(noteId, activeSourceIds)
 
   const zoomToBoundsCallback = useMemo(
     () =>
@@ -162,10 +168,12 @@ export function NoteCanvas({
         isLoading={isQuerying}
         isSummarizing={isSummarizing}
         results={ragResults}
+        resultsVersion={displayedResultsVersion}
         sourceColors={sourceColors}
+        queryText={latestCanvasText}
       />
     ),
-    [isQuerying, isSummarizing, ragResults, sourceColors],
+    [displayedResultsVersion, isQuerying, isSummarizing, latestCanvasText, ragResults, sourceColors],
   )
 
   useAppShellRightPanel(rightPanelNode)

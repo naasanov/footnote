@@ -1,4 +1,17 @@
+import { FONT_SIZES, TEXT_PROPS, type TLDefaultSizeStyle } from 'tldraw'
 import { z } from 'zod'
+
+function getDefaultCanvasPatternStep(size: TLDefaultSizeStyle): number {
+  return FONT_SIZES[size] * TEXT_PROPS.lineHeight
+}
+
+const defaultStrokeSizeSchema = z.enum(['s', 'm', 'l']).default('s')
+
+const defaultStrokeSizeResult = defaultStrokeSizeSchema.safeParse(
+  process.env.NEXT_PUBLIC_CANVAS_DEFAULT_STROKE_SIZE,
+)
+
+const defaultStrokeSize = defaultStrokeSizeResult.success ? defaultStrokeSizeResult.data : 's'
 
 const envSchema = z.object({
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -11,8 +24,11 @@ const envSchema = z.object({
   NEXT_PUBLIC_RAG_BUFFER_MAX_TOKENS: z.coerce.number().int().positive().default(300),
   NEXT_PUBLIC_CANVAS_SAVE_DEBOUNCE_MS: z.coerce.number().int().positive().default(5000),
   NEXT_PUBLIC_OCR_SEARCH_MAX_ZOOM: z.coerce.number().positive().default(1),
-  NEXT_PUBLIC_CANVAS_PATTERN_STEP_PX: z.coerce.number().int().positive().default(64),
-  NEXT_PUBLIC_CANVAS_DEFAULT_STROKE_SIZE: z.enum(['s', 'm', 'l']).default('s'),
+  NEXT_PUBLIC_CANVAS_PATTERN_STEP_PX: z
+    .coerce.number()
+    .positive()
+    .default(getDefaultCanvasPatternStep(defaultStrokeSize)),
+  NEXT_PUBLIC_CANVAS_DEFAULT_STROKE_SIZE: defaultStrokeSizeSchema,
   NEXT_PUBLIC_RAG_DEBUG_TIMING: z
     .string()
     .optional()
