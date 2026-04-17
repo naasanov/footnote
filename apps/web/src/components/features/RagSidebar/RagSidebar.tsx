@@ -10,6 +10,7 @@ interface RagSidebarProps {
   results: RagResult[]
   resultsVersion: number
   sourceColors: Record<string, string>
+  sourceNumbers: Record<string, number>
   queryText: string
 }
 
@@ -28,16 +29,10 @@ export function RagSidebar({
   results,
   resultsVersion,
   sourceColors,
+  sourceNumbers,
   queryText,
 }: RagSidebarProps) {
   const isRefreshing = isLoading || isSummarizing
-  const sourceNumbers = new Map<string, number>()
-
-  for (const result of results) {
-    if (!sourceNumbers.has(result.sourceId)) {
-      sourceNumbers.set(result.sourceId, sourceNumbers.size + 1)
-    }
-  }
 
   return (
     <div className="h-full min-w-0 flex flex-col">
@@ -75,7 +70,7 @@ export function RagSidebar({
                     result={result}
                     isSummaryLoading={isSummarizing && !result.summary}
                     sourceColor={sourceColors[result.sourceId] ?? '#2D5016'}
-                    sourceNumber={sourceNumbers.get(result.sourceId) ?? 0}
+                    sourceNumber={sourceNumbers[result.sourceId] ?? 0}
                     queryText={queryText}
                   />
                 ))}

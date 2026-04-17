@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   DefaultSizeStyle,
   DefaultToolbar,
@@ -16,7 +16,11 @@ import {
   type TLUiStylePanelProps,
 } from 'tldraw'
 import 'tldraw/tldraw.css'
-import { useAppShellRightPanel, useAppShellRegisterZoom } from '@/components/AppShell'
+import {
+  useAppShellCitationDrag,
+  useAppShellRightPanel,
+  useAppShellRegisterZoom,
+} from '@/components/AppShell'
 import { useSources } from '@/hooks/useSources'
 import { useCanvas } from '@/hooks/useCanvas'
 import { useOcrDebounce } from '@/hooks/useOcrDebounce'
@@ -117,6 +121,7 @@ export function NoteCanvas({
   initialCanvasBackground,
 }: NoteCanvasProps) {
   const [editor, setEditor] = useState<Editor | null>(null)
+  const citationDrag = useAppShellCitationDrag()
 
   const { sources } = useSources(noteId, notebookId)
   const {
@@ -161,6 +166,9 @@ export function NoteCanvas({
   const sourceColors = useMemo(() => {
     return Object.fromEntries(sources.map((source) => [source._id, source.color ?? '#2D5016']))
   }, [sources])
+  const sourceNumbers = useMemo(() => {
+    return Object.fromEntries(sources.map((source, index) => [source._id, index + 1]))
+  }, [sources])
 
   const rightPanelNode = useMemo(
     () => (
@@ -170,10 +178,19 @@ export function NoteCanvas({
         results={ragResults}
         resultsVersion={displayedResultsVersion}
         sourceColors={sourceColors}
+        sourceNumbers={sourceNumbers}
         queryText={latestCanvasText}
       />
     ),
-    [displayedResultsVersion, isQuerying, isSummarizing, latestCanvasText, ragResults, sourceColors],
+    [
+      displayedResultsVersion,
+      isQuerying,
+      isSummarizing,
+      latestCanvasText,
+      ragResults,
+      sourceColors,
+      sourceNumbers,
+    ],
   )
 
   useAppShellRightPanel(rightPanelNode)
@@ -210,9 +227,28 @@ export function NoteCanvas({
     [],
   )
 
+  const handleCanvasDropTargetRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      attachDropTarget(node)
+      citationDrag?.registerCanvasMetricsSource(
+        node
+          ? () => ({
+              rect: node.getBoundingClientRect(),
+              zoom: editor?.getZoomLevel() ?? 1,
+            })
+          : null,
+      )
+    },
+    [attachDropTarget, citationDrag, editor],
+  )
+
   return (
-    <CitationChipRenderProvider sourceIdSet={sourceIdSet} sourceColors={sourceColors}>
-      <div ref={attachDropTarget} className="h-full w-full relative">
+    <CitationChipRenderProvider
+      sourceIdSet={sourceIdSet}
+      sourceColors={sourceColors}
+      sourceNumbers={sourceNumbers}
+    >
+      <div ref={handleCanvasDropTargetRef} className="h-full w-full relative">
         <Tldraw
           key={noteId}
           licenseKey={env.NEXT_PUBLIC_TLDRAW_LICENSE_KEY}

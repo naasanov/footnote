@@ -324,12 +324,17 @@ export function useCanvas(
       if (!payload.sourceId || !payload.chunkId) return
 
       const point = editor.screenToPage({ x: event.clientX, y: event.clientY })
-      const size = getCitationChipDimensions(false)
+      const size = getCitationChipDimensions(false, {
+        locationLabel: payload.locationLabel,
+        detailText: payload.excerpt,
+      })
+      const x = point.x - size.w / 2
+      const y = point.y - size.h / 2
 
       ;(editor as any).createShape({
         type: 'citation-chip',
-        x: point.x,
-        y: point.y,
+        x,
+        y,
         props: {
           ...payload,
           expanded: false,

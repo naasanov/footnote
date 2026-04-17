@@ -1,6 +1,8 @@
 "use client";
 
+import { useAppShellCitationDrag } from "@/components/AppShell";
 import type { RagResult } from "@/lib/types";
+import { useMemo } from "react";
 
 interface PassageCardProps {
   result: RagResult;
@@ -113,23 +115,53 @@ export function PassageCard({
   isSummaryLoading,
   queryText,
 }: PassageCardProps) {
+  const citationDrag = useAppShellCitationDrag();
+  const transferPayload = useMemo(
+    () => ({
+      chunkId: result.chunkId,
+      sourceId: result.sourceId,
+      sourceName: result.sourceName,
+      locationLabel: result.locationLabel,
+      excerpt: result.excerpt,
+      fullText: result.fullText,
+      matchScore: result.matchScore,
+    }),
+    [result],
+  );
+  const previewPayload = useMemo(
+    () => ({
+      ...transferPayload,
+      sourceColor,
+      sourceNumber,
+    }),
+    [sourceColor, sourceNumber, transferPayload],
+  );
+
   return (
     <article
       draggable
       onDragStart={(event) => {
-        const payload = JSON.stringify({
-          chunkId: result.chunkId,
-          sourceId: result.sourceId,
-          sourceName: result.sourceName,
-          locationLabel: result.locationLabel,
-          excerpt: result.excerpt,
-          fullText: result.fullText,
-          matchScore: result.matchScore,
-        });
+        const payload = JSON.stringify(transferPayload);
 
         event.dataTransfer.setData("application/json", payload);
         event.dataTransfer.setData("text/plain", payload);
         event.dataTransfer.effectAllowed = "copyMove";
+        const transparentDragImage = document.createElement("div");
+        transparentDragImage.style.width = "1px";
+        transparentDragImage.style.height = "1px";
+        transparentDragImage.style.opacity = "0";
+        document.body.appendChild(transparentDragImage);
+        event.dataTransfer.setDragImage(transparentDragImage, 0, 0);
+        requestAnimationFrame(() => {
+          transparentDragImage.remove();
+        });
+        citationDrag?.startDrag(previewPayload, {
+          x: event.clientX,
+          y: event.clientY,
+        });
+      }}
+      onDragEnd={() => {
+        citationDrag?.endDrag();
       }}
       className="min-w-0 max-w-full overflow-hidden cursor-grab rounded-xl border border-[#E8E2D9] bg-[#FFFDF8] p-2.5 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing"
       style={{ borderLeft: `3px solid ${sourceColor}` }}

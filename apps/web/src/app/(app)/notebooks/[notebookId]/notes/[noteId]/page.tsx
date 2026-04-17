@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useNote } from '@/hooks/useNote'
 import { useNotes } from '@/hooks/useNotes'
 import { NoteCanvas } from '@/components/features/NoteCanvas/NoteCanvas'
+import { useAppShellLeftOpen } from '@/components/AppShell'
 import {
   clearLastSelectedNote,
   persistLastSelectedNote,
@@ -18,6 +19,7 @@ interface NotePageProps {
 export default function NotePage({ params }: NotePageProps) {
   const { notebookId, noteId } = use(params)
   const router = useRouter()
+  const leftOpen = useAppShellLeftOpen()
   const { data: note, isLoading, isError } = useNote(noteId)
   const { update } = useNotes(notebookId)
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -112,7 +114,7 @@ export default function NotePage({ params }: NotePageProps) {
   return (
     <div className="flex h-full flex-col">
       {/* Note title bar */}
-      <div className="flex items-center h-12 px-6 border-b border-[#E8E2D9] shrink-0">
+      <div className={`flex items-center h-12 border-b border-[#E8E2D9] shrink-0 ${leftOpen ? 'px-6' : 'pl-14 pr-6'}`}>
         {isEditingTitle ? (
           <input
             ref={titleInputRef}

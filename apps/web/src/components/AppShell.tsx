@@ -11,6 +11,8 @@ import { Input } from './ui/input'
 import { useOcrSearch } from '@/hooks/useOcrSearch'
 import { persistAppShellLayoutState, readAppShellLayoutState } from '@/lib/session-state'
 import { cn } from '@/lib/utils'
+import { getCitationChipDimensions } from '@/components/features/NoteCanvas/CitationChipShape'
+import type { CitationDropPayload } from '@/hooks/useCanvas'
 import type { OcrBbox } from '@/lib/types'
 
 interface AppShellProps {
@@ -22,7 +24,43 @@ interface AppShellRightPanelContextValue {
   setRightPanelNode: (node: React.ReactNode) => void
 }
 
+interface AppShellLeftSidebarContextValue {
+  leftOpen: boolean
+}
+
+interface CitationDragPreviewPayload extends CitationDropPayload {
+  sourceColor: string
+  sourceNumber: number
+}
+
+interface CitationDragPreviewState {
+  isDragging: boolean
+  payload: CitationDragPreviewPayload | null
+  pointer: { x: number; y: number } | null
+  isOverCanvas: boolean
+  isDropping: boolean
+  canvasZoom: number
+}
+
+interface AppShellCitationDragContextValue {
+  startDrag: (payload: CitationDragPreviewPayload, point: { x: number; y: number }) => void
+  endDrag: () => void
+  registerCanvasMetricsSource: (
+    source: (() => { rect: DOMRect | null; zoom: number }) | null,
+  ) => void
+}
+
 const AppShellRightPanelContext = createContext<AppShellRightPanelContextValue | null>(null)
+const AppShellLeftSidebarContext = createContext<AppShellLeftSidebarContextValue | null>(null)
+const AppShellCitationDragContext = createContext<AppShellCitationDragContextValue | null>(null)
+
+export function useAppShellLeftOpen(): boolean {
+  return useContext(AppShellLeftSidebarContext)?.leftOpen ?? true
+}
+
+export function useAppShellCitationDrag() {
+  return useContext(AppShellCitationDragContext)
+}
 
 // ─── Canvas zoom context ──────────────────────────────────────────────────────
 
@@ -59,9 +97,126 @@ const MIN_RIGHT_WIDTH = 320
 const DEFAULT_RIGHT_WIDTH = 300
 const MAX_RIGHT_WIDTH = 520
 const DEFAULT_LEFT_TOP_RATIO = 0.62
+const DRAG_PREVIEW_CARD_WIDTH = 312
+const DRAG_PREVIEW_CARD_HEIGHT = 184
+const DRAG_PREVIEW_OFFSET = { x: 28, y: 22 }
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
+}
+
+function isPointInsideRect(point: { x: number; y: number }, rect: DOMRect | null) {
+  if (!rect) return false
+
+  return (
+    point.x >= rect.left &&
+    point.x <= rect.right &&
+    point.y >= rect.top &&
+    point.y <= rect.bottom
+  )
+}
+
+function CitationDragPreview({ state }: { state: CitationDragPreviewState }) {
+  if (!state.isDragging || !state.payload || !state.pointer) {
+    return null
+  }
+
+  const chipSize = getCitationChipDimensions(false, {
+    locationLabel: state.payload.locationLabel,
+    detailText: state.payload.excerpt,
+  })
+
+  const isCompact = state.isOverCanvas || state.isDropping
+  const width = isCompact ? chipSize.w * state.canvasZoom : DRAG_PREVIEW_CARD_WIDTH
+  const height = isCompact ? chipSize.h * state.canvasZoom : DRAG_PREVIEW_CARD_HEIGHT
+  const x = isCompact
+    ? state.pointer.x - width / 2
+    : state.pointer.x - width / 2 + DRAG_PREVIEW_OFFSET.x
+  const y = isCompact
+    ? state.pointer.y - height / 2
+    : state.pointer.y - height / 2 + DRAG_PREVIEW_OFFSET.y
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[80]">
+      <motion.div
+        initial={false}
+        animate={{
+          x,
+          y,
+          width,
+          height,
+          borderRadius: isCompact ? 24 : 18,
+          backgroundColor: isCompact ? '#FBF6EE' : '#FFFDF8',
+          boxShadow: isCompact
+            ? '0 10px 24px rgba(28, 25, 23, 0.12)'
+            : '0 18px 40px rgba(28, 25, 23, 0.16)',
+          opacity: state.isDropping ? 0 : 1,
+          scale: state.isDropping ? 0.94 : state.isOverCanvas ? 0.98 : 1,
+        }}
+        transition={{ type: 'spring', stiffness: 320, damping: 28, mass: 0.8 }}
+        className="overflow-hidden text-left"
+        style={{
+          borderStyle: 'solid',
+          borderTopWidth: 1,
+          borderRightWidth: 1,
+          borderBottomWidth: 1,
+          borderLeftWidth: 3,
+          borderTopColor: state.isOverCanvas ? '#E2D7C8' : '#E8E2D9',
+          borderRightColor: state.isOverCanvas ? '#E2D7C8' : '#E8E2D9',
+          borderBottomColor: state.isOverCanvas ? '#E2D7C8' : '#E8E2D9',
+          borderLeftColor: state.payload.sourceColor,
+          transformOrigin: 'top left',
+        }}
+      >
+        <div
+          className="flex h-full flex-col"
+          style={
+            isCompact
+              ? {
+                  width: chipSize.w,
+                  height: chipSize.h,
+                  transform: `scale(${state.canvasZoom})`,
+                  transformOrigin: 'top left',
+                }
+              : undefined
+          }
+        >
+          <div className="flex min-h-[45px] items-center gap-2 px-3.5 py-2.5">
+            <span
+              className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-2 text-[12px] font-semibold text-white"
+              style={{ backgroundColor: state.payload.sourceColor }}
+            >
+              {state.payload.sourceNumber}
+            </span>
+            <span className="truncate font-display text-sm font-medium text-[#3F3A35]">
+              {state.payload.locationLabel}
+            </span>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {!isCompact && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
+                className="flex-1 px-3.5 pb-3"
+              >
+                <div className="rounded-md border border-[#EAE2D6] bg-[#F8F4EC]/90 px-2.5 py-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A7F71]">
+                    Drag to cite
+                  </p>
+                  <p className="mt-1 line-clamp-3 text-sm leading-6 text-[#292524]">
+                    {state.payload.excerpt}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </div>
+  )
 }
 
 export function useAppShellRightPanel(node: React.ReactNode) {
@@ -96,10 +251,141 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
   const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH)
   const [draggingSidebar, setDraggingSidebar] = useState<'left' | 'right' | null>(null)
   const [hasHydratedLayout, setHasHydratedLayout] = useState(false)
+  const [citationDragState, setCitationDragState] = useState<CitationDragPreviewState>({
+    isDragging: false,
+    payload: null,
+    pointer: null,
+    isOverCanvas: false,
+    isDropping: false,
+    canvasZoom: 1,
+  })
   const shellRef = useRef<HTMLDivElement | null>(null)
   const leftSplitRef = useRef<HTMLDivElement | null>(null)
   const leftDividerFrameRef = useRef<number | null>(null)
   const pendingLeftTopRatioRef = useRef(leftTopRatio)
+  const citationCanvasMetricsSourceRef = useRef<(() => { rect: DOMRect | null; zoom: number }) | null>(
+    null,
+  )
+  const citationDropTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const registerCanvasMetricsSource = useCallback(
+    (source: (() => { rect: DOMRect | null; zoom: number }) | null) => {
+      citationCanvasMetricsSourceRef.current = source
+    },
+    [],
+  )
+
+  const getCanvasMetrics = useCallback(() => {
+    return citationCanvasMetricsSourceRef.current?.() ?? { rect: null, zoom: 1 }
+  }, [])
+
+  const endCitationDrag = useCallback(() => {
+    if (citationDropTimerRef.current) {
+      clearTimeout(citationDropTimerRef.current)
+      citationDropTimerRef.current = null
+    }
+
+    setCitationDragState((current) => {
+      if (!current.isDragging) {
+        return current
+      }
+
+      if (current.isOverCanvas) {
+        citationDropTimerRef.current = setTimeout(() => {
+          setCitationDragState({
+            isDragging: false,
+            payload: null,
+            pointer: null,
+            isOverCanvas: false,
+            isDropping: false,
+            canvasZoom: 1,
+          })
+          citationDropTimerRef.current = null
+        }, 140)
+
+        return {
+          ...current,
+          isDropping: true,
+        }
+      }
+
+      return {
+        isDragging: false,
+        payload: null,
+        pointer: null,
+        isOverCanvas: false,
+        isDropping: false,
+        canvasZoom: 1,
+      }
+    })
+  }, [])
+
+  const startCitationDrag = useCallback(
+    (payload: CitationDragPreviewPayload, point: { x: number; y: number }) => {
+      if (citationDropTimerRef.current) {
+        clearTimeout(citationDropTimerRef.current)
+        citationDropTimerRef.current = null
+      }
+
+      const { rect: canvasRect, zoom } = getCanvasMetrics()
+
+      setCitationDragState({
+        isDragging: true,
+        payload,
+        pointer: point,
+        isOverCanvas: isPointInsideRect(point, canvasRect),
+        isDropping: false,
+        canvasZoom: zoom,
+      })
+    },
+    [getCanvasMetrics],
+  )
+
+  useEffect(() => {
+    if (!citationDragState.isDragging) return
+
+    function handleDragOver(event: DragEvent) {
+      const point = { x: event.clientX, y: event.clientY }
+      const { rect: canvasRect, zoom } = getCanvasMetrics()
+
+      setCitationDragState((current) =>
+        current.isDragging
+          ? {
+              ...current,
+              pointer: point,
+              isOverCanvas: isPointInsideRect(point, canvasRect),
+              canvasZoom: zoom,
+            }
+          : current,
+      )
+    }
+
+    function handleDrop() {
+      endCitationDrag()
+    }
+
+    function handleDragEnd() {
+      endCitationDrag()
+    }
+
+    window.addEventListener('dragover', handleDragOver)
+    window.addEventListener('drop', handleDrop)
+    window.addEventListener('dragend', handleDragEnd)
+
+    return () => {
+      window.removeEventListener('dragover', handleDragOver)
+      window.removeEventListener('drop', handleDrop)
+      window.removeEventListener('dragend', handleDragEnd)
+    }
+  }, [citationDragState.isDragging, endCitationDrag, getCanvasMetrics])
+
+  useEffect(() => {
+    return () => {
+      if (citationDropTimerRef.current) {
+        clearTimeout(citationDropTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const storedLayout = readAppShellLayoutState()
@@ -249,9 +535,17 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
 
   return (
     <AppShellCanvasContext.Provider value={{ registerZoom, zoom: zoomFn }}>
+    <AppShellLeftSidebarContext.Provider value={{ leftOpen }}>
     <AppShellRightPanelContext.Provider
       value={{
         setRightPanelNode: setSlottedRightPanel,
+      }}
+    >
+    <AppShellCitationDragContext.Provider
+      value={{
+        startDrag: startCitationDrag,
+        endDrag: endCitationDrag,
+        registerCanvasMetricsSource,
       }}
     >
       <TooltipProvider delayDuration={400}>
@@ -470,8 +764,11 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
           )}
         </AnimatePresence>
         </div>
+        <CitationDragPreview state={citationDragState} />
       </TooltipProvider>
+    </AppShellCitationDragContext.Provider>
     </AppShellRightPanelContext.Provider>
+    </AppShellLeftSidebarContext.Provider>
     </AppShellCanvasContext.Provider>
   )
 }

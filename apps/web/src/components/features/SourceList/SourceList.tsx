@@ -55,6 +55,7 @@ export function SourceList({ noteId, notebookId }: SourceListProps) {
   const [, setDragDepth] = useState(0)
 
   const activeSourceIds = new Set(note?.activeSourceIds ?? [])
+  const sourceNumbers = new Map(sources.map((source, index) => [source._id, index + 1]))
 
   function handleToggle(sourceId: string, active: boolean) {
     const next = active
@@ -160,6 +161,7 @@ export function SourceList({ noteId, notebookId }: SourceListProps) {
               <SourceRow
                 key={source._id}
                 source={source}
+                sourceNumber={sourceNumbers.get(source._id) ?? 0}
                 scopeLabel="notebook"
                 active={activeSourceIds.has(source._id)}
                 onToggle={(v) => handleToggle(source._id, v)}
@@ -171,6 +173,7 @@ export function SourceList({ noteId, notebookId }: SourceListProps) {
               <SourceRow
                 key={source._id}
                 source={source}
+                sourceNumber={sourceNumbers.get(source._id) ?? 0}
                 scopeLabel="note"
                 active={activeSourceIds.has(source._id)}
                 onToggle={(v) => handleToggle(source._id, v)}
@@ -265,6 +268,7 @@ export function SourceList({ noteId, notebookId }: SourceListProps) {
 
 interface SourceRowProps {
   source: Source
+  sourceNumber: number
   scopeLabel: 'notebook' | 'note'
   active: boolean
   onToggle: (v: boolean) => void
@@ -272,7 +276,15 @@ interface SourceRowProps {
   onPreview: () => void
 }
 
-function SourceRow({ source, scopeLabel, active, onToggle, onDelete, onPreview }: SourceRowProps) {
+function SourceRow({
+  source,
+  sourceNumber,
+  scopeLabel,
+  active,
+  onToggle,
+  onDelete,
+  onPreview,
+}: SourceRowProps) {
   const badge = STATUS_BADGE[source.status]
 
   return (
@@ -284,12 +296,13 @@ function SourceRow({ source, scopeLabel, active, onToggle, onDelete, onPreview }
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          {/* Color dot */}
-          <div
-            className="shrink-0 h-2 w-2 rounded-full"
+          <span
+            aria-label={`Source ${sourceNumber}`}
+            className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 text-[11px] font-semibold text-white"
             style={{ backgroundColor: source.color }}
-            aria-hidden="true"
-          />
+          >
+            {sourceNumber}
+          </span>
           <button
             onClick={onPreview}
             className="truncate text-xs text-[#1C1917] hover:underline text-left"
