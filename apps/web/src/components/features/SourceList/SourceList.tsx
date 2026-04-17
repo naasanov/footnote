@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { Upload, Trash2, Eye } from 'lucide-react'
+import { toast } from 'sonner'
 import { useSources } from '@/hooks/useSources'
 import { useNote } from '@/hooks/useNote'
 import { SourceToggle } from './SourceToggle'
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 import type { Source } from '@/lib/types'
 
 const ACCEPTED_TYPES = '.pdf,.docx,.md,.txt,.png,.jpg,.jpeg'
+const ACCEPTED_EXTENSIONS = new Set(ACCEPTED_TYPES.split(','))
 
 const STATUS_BADGE: Record<Source['status'], { label: string; className: string }> = {
   processing: {
@@ -49,6 +51,8 @@ export function SourceList({ noteId, notebookId }: SourceListProps) {
   const { data: note } = useNote(noteId)
   const [confirmDeleteSource, setConfirmDeleteSource] = useState<Source | null>(null)
   const [previewSource, setPreviewSource] = useState<Source | null>(null)
+  const [isDragActive, setIsDragActive] = useState(false)
+  const [, setDragDepth] = useState(0)
 
   const activeSourceIds = new Set(note?.activeSourceIds ?? [])
 
@@ -59,74 +63,159 @@ export function SourceList({ noteId, notebookId }: SourceListProps) {
     toggle.mutate({ activeSourceIds: next })
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    upload.mutate({ file, scopeType: 'notebook', scopeId: notebookId })
-    e.target.value = ''
+  function getAcceptedFiles(files: FileList | File[]) {
+    return Array.from(files).filter((file) => {
+      const extension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`
+      return ACCEPTED_EXTENSIONS.has(extension)
+    })
   }
 
-  if (sources.length === 0) {
-    return (
-      <div className="px-3 py-2">
-        <p className="text-xs text-[#C8BFB0] mb-2">No sources yet</p>
-        <input ref={fileInputRef} type="file" accept={ACCEPTED_TYPES} className="hidden" onChange={handleFileChange} />
+  async function handleFiles(files: FileList | File[]) {
+    const acceptedFiles = getAcceptedFiles(files)
+
+    if (acceptedFiles.length === 0) {
+      toast.error('Unsupported file type')
+      return
+    }
+
+    const rejectedCount = Array.from(files).length - acceptedFiles.length
+    if (rejectedCount > 0) {
+      toast.error('Some files were skipped because their type is not supported')
+    }
+
+    for (const file of acceptedFiles) {
+      await upload.mutateAsync({ file, scopeType: 'notebook', scopeId: notebookId })
+    }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files?.length) return
+
+    try {
+      await handleFiles(files)
+    } finally {
+      e.target.value = ''
+    }
+  }
+
+  function handleDragEnter(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragDepth((depth) => depth + 1)
+    setIsDragActive(true)
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'copy'
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragDepth((depth) => {
+      const nextDepth = Math.max(0, depth - 1)
+      if (nextDepth === 0) {
+        setIsDragActive(false)
+      }
+      return nextDepth
+    })
+  }
+
+  async function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragDepth(0)
+    setIsDragActive(false)
+
+    const files = e.dataTransfer.files
+    if (!files?.length) return
+
+    await handleFiles(files)
+  }
+
+  return (
+    <div
+      className={cn(
+        'mx-2 rounded-md border border-dashed border-transparent px-2 py-1 transition-colors',
+        isDragActive && 'border-[#2D5016]/40 bg-[#F5F1E8]',
+      )}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={(e) => {
+        void handleDrop(e)
+      }}
+    >
+      <div className="flex flex-col gap-1">
+        {sources.length === 0 ? (
+          <div className="px-1 py-1">
+            <p className="mb-2 text-xs text-[#C8BFB0]">No sources yet</p>
+          </div>
+        ) : (
+          <>
+            {notebookSources.map((source) => (
+              <SourceRow
+                key={source._id}
+                source={source}
+                scopeLabel="notebook"
+                active={activeSourceIds.has(source._id)}
+                onToggle={(v) => handleToggle(source._id, v)}
+                onDelete={() => setConfirmDeleteSource(source)}
+                onPreview={() => setPreviewSource(source)}
+              />
+            ))}
+            {noteSources.map((source) => (
+              <SourceRow
+                key={source._id}
+                source={source}
+                scopeLabel="note"
+                active={activeSourceIds.has(source._id)}
+                onToggle={(v) => handleToggle(source._id, v)}
+                onDelete={() => setConfirmDeleteSource(source)}
+                onPreview={() => setPreviewSource(source)}
+              />
+            ))}
+          </>
+        )}
+
+        {isDragActive && (
+          <div className="rounded-md border border-[#2D5016]/20 bg-[#FFFDF8] px-3 py-4 text-center">
+            <p className="text-xs font-medium text-[#2D5016]">Drop files to upload them</p>
+            <p className="mt-1 text-[11px] text-[#78716C]">
+              Supports PDF, DOCX, Markdown, text, PNG, and JPG
+            </p>
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_TYPES}
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            void handleFileChange(e)
+          }}
+        />
         <Button
-          variant="outline"
+          variant={sources.length === 0 ? 'outline' : 'ghost'}
           size="sm"
-          className="w-full text-xs"
+          className={cn(
+            'mt-1 w-full text-xs',
+            sources.length === 0
+              ? ''
+              : 'justify-start text-[#C8BFB0] hover:text-[#1C1917]',
+          )}
           onClick={() => fileInputRef.current?.click()}
           disabled={upload.isPending}
         >
           <Upload className="h-3 w-3" />
-          Upload source
+          {upload.isPending ? 'Uploading…' : '+ upload source'}
         </Button>
       </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-1 px-2 py-1">
-      {notebookSources.map((source) => (
-        <SourceRow
-          key={source._id}
-          source={source}
-          scopeLabel="notebook"
-          active={activeSourceIds.has(source._id)}
-          onToggle={(v) => handleToggle(source._id, v)}
-          onDelete={() => setConfirmDeleteSource(source)}
-          onPreview={() => setPreviewSource(source)}
-        />
-      ))}
-      {noteSources.map((source) => (
-        <SourceRow
-          key={source._id}
-          source={source}
-          scopeLabel="note"
-          active={activeSourceIds.has(source._id)}
-          onToggle={(v) => handleToggle(source._id, v)}
-          onDelete={() => setConfirmDeleteSource(source)}
-          onPreview={() => setPreviewSource(source)}
-        />
-      ))}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={ACCEPTED_TYPES}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-1 w-full justify-start text-xs text-[#C8BFB0] hover:text-[#1C1917]"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={upload.isPending}
-      >
-        <Upload className="h-3 w-3" />
-        {upload.isPending ? 'Uploading…' : '+ upload source'}
-      </Button>
 
       {/* Delete confirmation dialog */}
       <Dialog open={!!confirmDeleteSource} onOpenChange={(open) => !open && setConfirmDeleteSource(null)}>
