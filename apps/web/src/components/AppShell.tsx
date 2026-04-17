@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, createContext, useContext, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import { UserButton } from '@clerk/nextjs'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Search, X } from 'lucide-react'
 import { NotebookTree } from './features/NotebookTree/NotebookTree'
@@ -561,18 +562,29 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
             {/* Sidebar header */}
             <div className="flex items-center justify-between px-3 h-12 border-b border-[#E8E2D9] shrink-0">
               <span className="font-display text-sm font-semibold text-[#1C1917]">Footnote</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setLeftOpen(false)}
-                    className="text-[#C8BFB0] hover:text-[#1C1917] transition-colors"
-                    aria-label="Collapse sidebar"
-                  >
-                    <PanelLeftClose className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">Collapse sidebar</TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-2">
+                <UserButton
+                  afterSignOutUrl="/sign-in"
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox:
+                        'h-7 w-7 ring-1 ring-[#E8E2D9] transition-shadow hover:ring-[#C8BFB0]',
+                    },
+                  }}
+                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setLeftOpen(false)}
+                      className="text-[#C8BFB0] hover:text-[#1C1917] transition-colors"
+                      aria-label="Collapse sidebar"
+                    >
+                      <PanelLeftClose className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Collapse sidebar</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
             <div ref={leftSplitRef} className="flex-1 min-h-0 flex flex-col">
               {hasSelectedNote && noteId && (
@@ -655,8 +667,17 @@ export function AppShell({ children, rightPanel }: AppShellProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.15 }}
-              className="absolute left-2 top-3 z-10"
+              className="absolute left-2 top-3 z-10 flex items-center gap-2"
             >
+              <UserButton
+                afterSignOutUrl="/sign-in"
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox:
+                      'h-8 w-8 rounded-md border border-[#E8E2D9] bg-[#FFFDF8] shadow-sm transition-shadow hover:border-[#C8BFB0]',
+                  },
+                }}
+              />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
